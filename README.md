@@ -55,5 +55,6 @@ If existing tables are to be used as a base for the DB to then add to, [build_db
 - [ ] Look further into XACT
 - [ ] Add settings for simple configuration
 - [ ] `SoundBGM.txt`
+- [ ] Refactor to reduce coupling between CLI and GUI
 
 ---

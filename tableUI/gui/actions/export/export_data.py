@@ -5,13 +5,13 @@ from pathlib import Path
 from PySide6.QtWidgets import QWidget, QMessageBox
 from sqlmodel import Session, select
 
-from tableUI.const import BACKUP_PATH, USER_DATA_PATH
+from tableUI.const import BACKUP_PATH
 from tableUI.db.models import Song
 from tableUI.db.to_tables import get_all_tables
 from tableUI.gui.actions.backup.backup_game_data import backup_game_data
-from tableUI.gui.utils.crypt.finale import encrypt_table_with_env_key
-from tableUI.gui.utils.paths.external_data_paths import get_encrypted_table_paths, get_cover_art_paths_for_song
-from tableUI.gui.utils.paths.internal_data_paths import get_internal_cover_art_paths_for_song_id
+from tableUI.utils.crypt.finale import encrypt_table_with_env_key
+from tableUI.utils.paths.external_data_paths import get_encrypted_table_paths, get_cover_art_paths_for_song
+from tableUI.utils.paths.internal_data_paths import get_internal_cover_art_paths_for_song_id
 
 
 def export_data(session: Session, game_dir: Path, parent: QWidget = None):
@@ -22,6 +22,8 @@ def export_data(session: Session, game_dir: Path, parent: QWidget = None):
         table_contents = get_all_tables(session)
 
         table_paths = get_encrypted_table_paths(game_dir)
+
+        table_paths.music.parent.mkdir(parents=True, exist_ok=True)
 
         for plain_content, dest_path in (
                 (table_contents.music, table_paths.music),
@@ -60,7 +62,7 @@ def export_data(session: Session, game_dir: Path, parent: QWidget = None):
         QMessageBox.information(parent, 'Export successful', 'All data has been successfully exported.')
 
     except Exception as e:
-        # raise e
+        raise e
         QMessageBox.critical(parent,
                              'Error Exporting Data',
                              f'An error occured when exporting data. ({type(e)}: {e})')

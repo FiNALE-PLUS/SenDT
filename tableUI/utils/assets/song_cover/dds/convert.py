@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import NamedTuple
 
 from PIL import Image
 from PIL.Image import Resampling, Image as ImageObject
 
 from tableUI.const import BASE_DIR
-from tableUI.gui.utils.assets.song_cover.dds.exceptions import SongCoverSourceImageError, SongCoverProcessingError
+from tableUI.utils.assets.song_cover.dds.exceptions import SongCoverSourceImageError, SongCoverProcessingError
 
 SONG_COVER_FULL_SIZE = (256, 256)
 SONG_COVER_RELFECTION_BASE_SIZE = (220, 220)

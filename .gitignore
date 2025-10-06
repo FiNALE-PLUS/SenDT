@@ -1,7 +1,8 @@
 # SenDT specific
 /.env
-/tableUI/data/user/
+/tableUI/data/user/*
 /tableUI/data/table_data.sqlite
+/tableUI/bin/ffmpeg.exe
 
 
 # Byte-compiled / optimized / DLL files

@@ -3,7 +3,7 @@ from PySide6.QtGui import Qt, QPalette, QColor
 from PySide6.QtWidgets import QDialog, QHBoxLayout, QLabel, QGroupBox, QVBoxLayout
 
 from tableUI.db.models import Song
-from tableUI.gui.utils.assets.song_cover.dds.read import open_cover_art_images_for_song_id
+from tableUI.utils.assets.song_cover.dds.read import open_cover_art_images_for_song_id
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 
 

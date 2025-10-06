@@ -3,25 +3,22 @@ from typing import Iterable
 
 from PIL import Image
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtGui import Qt, QScreen
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QButtonGroup, QPushButton, QHBoxLayout, QFormLayout, \
-    QLineEdit, QSpinBox, QComboBox, QTabWidget, QWidget, QGroupBox, QRadioButton, QDoubleSpinBox, QCheckBox, \
-    QGridLayout, QMessageBox
+from PySide6.QtGui import Qt
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QFormLayout, \
+    QSpinBox, QComboBox, QGroupBox, QDoubleSpinBox, QMessageBox
 from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from tableUI.const import BASE_DIR, USER_DATA_PATH
-from tableUI.db.models import Song, SongArtist, SongGenre
-from tableUI.gui.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
+from tableUI.db.models import Song, SongGenre
+from tableUI.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
 from tableUI.gui.widgets.edit_song.artist_panel import SongEditArtistPanel
 from tableUI.gui.widgets.edit_song.flag_panel import SongEditFlagPanel
 from tableUI.gui.widgets.files.file_select import ImageSelectRow
 from tableUI.gui.widgets.form.double_range import DoubleRangeSpinBoxes
-from tableUI.gui.widgets.form.lang_entry import GroupBoxedLangEntries, GroupBoxedTextoutLangEntries
+from tableUI.gui.widgets.form.lang_entry import GroupBoxedTextoutLangEntries
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 from tableUI.parsers.tables.field_types.utils.safename import safename_from_song_name
-from tableUI.parsers.tables.table_types.music.models import MusicRow
 from tableUI.paths import get_user_data_cover_art_dir_for
 
 

@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 
 from tableUI.db.models import Song
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
-from tableUI.gui.utils.paths.external_data_paths import get_cover_art_paths_for_song, get_encrypted_table_paths, get_table_dir, \
+from tableUI.utils.paths.external_data_paths import get_cover_art_paths_for_song, get_encrypted_table_paths, get_table_dir, \
     get_chart_dir
 
 
@@ -43,7 +43,8 @@ def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
     :return: The number of songs backed up.
     """
 
-    assert out_path.parent.is_dir() and out_path.parent.exists()
+    if not out_path.is_dir() and out_path.exists():
+        raise ValueError('The given output path does not exist.')
 
     songs_to_backup = session.exec(select(Song).where(not Song.is_vanilla)).all()
 

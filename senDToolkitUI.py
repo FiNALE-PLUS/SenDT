@@ -5,11 +5,16 @@ from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QSplashScreen
 from sqlmodel import Session
 
-from tableUI.const import BASE_DIR, DATA_PATH
+from tableUI.const import BASE_DIR, DATA_PATH, FFMPEG_PATH
 from tableUI.db.initialise import init_db
 from tableUI.gui import SenDTuiWindow
 
 if __name__ == '__main__':
+
+    # TODO: Check if FFmpeg is in path if no local version is found
+    if not FFMPEG_PATH.exists():
+        raise EnvironmentError(f"No file is found at {FFMPEG_PATH}. \nPlease add an FFmpeg executable.")
+
     app = QApplication(sys.argv)
     app.setApplicationName("SenDT UI")
     splash_pixmap = QPixmap(DATA_PATH / 'img' / 'splash.png')

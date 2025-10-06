@@ -1,3 +1,9 @@
+# SenDT specific
+/.env
+/tableUI/data/user/
+/tableUI/data/table_data.sqlite
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

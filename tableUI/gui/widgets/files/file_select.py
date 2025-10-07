@@ -35,3 +35,10 @@ class ImageSelectRow(FileSelectRow):
     dialog_caption: str = 'Select Image'
     dir: str = ''
     filter: str = f'Image Files ({' '.join({f"*{ex}" for ex, f in exts.items() if f in Image.OPEN})})'
+
+
+class VideoSelectRow(FileSelectRow):
+    dialog_caption: str = 'Select Video'
+    dir: str = ''
+    filter: str = (f'Video Files (*.mp4 *.m4v *.mkv *.flv *.f4v *.avi *.wmv *.mov *.webm *.ogv);; '
+                   f'All Files (*)')

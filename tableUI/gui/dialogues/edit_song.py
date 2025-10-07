@@ -2,10 +2,10 @@ from pathlib import Path
 from typing import Iterable
 
 from PIL import Image
-from PySide6.QtCore import Signal, Slot
+from PySide6.QtCore import Signal, Slot, QThreadPool
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QFormLayout, \
-    QSpinBox, QComboBox, QGroupBox, QDoubleSpinBox, QMessageBox
+    QSpinBox, QComboBox, QGroupBox, QDoubleSpinBox, QMessageBox, QProgressDialog
 from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
@@ -14,12 +14,14 @@ from tableUI.db.models import Song, SongGenre
 from tableUI.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
 from tableUI.gui.widgets.edit_song.artist_panel import SongEditArtistPanel
 from tableUI.gui.widgets.edit_song.flag_panel import SongEditFlagPanel
-from tableUI.gui.widgets.files.file_select import ImageSelectRow
+from tableUI.gui.widgets.files.file_select import ImageSelectRow, VideoSelectRow
 from tableUI.gui.widgets.form.double_range import DoubleRangeSpinBoxes
 from tableUI.gui.widgets.form.lang_entry import GroupBoxedTextoutLangEntries
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 from tableUI.parsers.tables.field_types.utils.safename import safename_from_song_name
 from tableUI.paths import get_user_data_cover_art_dir_for
+from tableUI.utils.assets.video.runnables.transcode import BackgroundVideoTranscodeWorker
+from tableUI.utils.paths.internal_data_paths import get_internal_bg_video_path_for_song_id
 
 
 class SongManagementDialog(QDialog):
@@ -71,6 +73,10 @@ class SongManagementDialog(QDialog):
         ### Cover Art
         self.cover_art_file_select = ImageSelectRow()
         main_data_form.addRow('Cover Art Image:', self.cover_art_file_select)
+
+        ### Background Video
+        self.bg_video_file_select = VideoSelectRow()
+        main_data_form.addRow('Background Video File:', self.bg_video_file_select)
 
         ### BPM
         self.bpm_select = QDoubleSpinBox()
@@ -278,8 +284,60 @@ class SongManagementDialog(QDialog):
         self.song.special_pv = song_flags.special_preview
 
         # Emit configured song to be added to DB
-        self.songConfigurationComplete.emit(self.song)
-        self.accept()
+
+        if self.bg_video_file_select.getFilePath():
+            dialog = None
+            try:
+                dialog = QProgressDialog(
+                    'Preparing to transcode background video...',
+                    'Cancel',
+                    0, 0,
+                    self
+                )
+
+                dialog.show()
+
+                output_path = get_internal_bg_video_path_for_song_id(self.song_id_select.currentData())
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+
+                transcode_worker = BackgroundVideoTranscodeWorker(
+                    input_path=Path(self.bg_video_file_select.getFilePath()),
+                    output_path=output_path,
+                )
+
+                transcode_worker.signals.started.connect(lambda: dialog.setLabelText('Transcode job started.'))
+                # TODO: create function to format timedelta
+                transcode_worker.signals.progress.connect(
+                    lambda progress_info: dialog.setLabelText(f'Transcoding video. Currently at: {progress_info.time}')
+                )
+
+                transcode_worker.signals.completed.connect(
+                    lambda: (dialog.close(), self.songConfigurationComplete.emit(self.song), self.accept())
+                )
+
+                # Just don't look at this.
+                transcode_worker.signals.terminated.connect(
+                    lambda: (dialog.close(), (_ for _ in ()).throw(Exception('FFmpeg transcode terminated.')))
+                )
+
+                QThreadPool.globalInstance().start(transcode_worker)
+            except Exception as e:
+                # raise e
+                if dialog is not None:
+                    dialog.close()
+                QMessageBox.critical(
+                    self,
+                    'Error Transcoding Background Video',
+                    f'An error occured while transcoding the background video. ({type(e)}: {e})'
+                )
+
+                return
+        else:
+            self.songConfigurationComplete.emit(self.song)
+            self.accept()
+
+
+
 
     def setup_bpm_select(self):
         self.bpm_select.setMinimum(0)

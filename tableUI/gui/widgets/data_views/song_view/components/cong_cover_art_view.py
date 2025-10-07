@@ -1,3 +1,5 @@
+import os
+
 from PIL import Image
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
 
@@ -6,6 +8,7 @@ from tableUI.db.models import Song
 from tableUI.gui.dialogues.song_cover_art_preview import \
     SongCoverArtPreviewDialog
 from tableUI.paths import get_user_data_cover_art_dir_for
+from tableUI.utils.paths.internal_data_paths import get_internal_bg_video_path_for_song_id
 
 
 class InteractableSongCoverArtDisplay(QVBoxLayout):

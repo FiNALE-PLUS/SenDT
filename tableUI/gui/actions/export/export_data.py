@@ -10,8 +10,10 @@ from tableUI.db.models import Song
 from tableUI.db.to_tables import get_all_tables
 from tableUI.gui.actions.backup.backup_game_data import backup_game_data
 from tableUI.utils.crypt.finale import encrypt_table_with_env_key
-from tableUI.utils.paths.external_data_paths import get_encrypted_table_paths, get_cover_art_paths_for_song
-from tableUI.utils.paths.internal_data_paths import get_internal_cover_art_paths_for_song_id
+from tableUI.utils.paths.external_data_paths import get_encrypted_table_paths, get_cover_art_paths_for_song, \
+    get_external_bg_video_path_for_song
+from tableUI.utils.paths.internal_data_paths import get_internal_cover_art_paths_for_song_id, \
+    get_internal_bg_video_path_for_song_id
 
 
 def export_data(session: Session, game_dir: Path, parent: QWidget = None):
@@ -59,10 +61,18 @@ def export_data(session: Session, game_dir: Path, parent: QWidget = None):
             if (src_small_path := (base_src_cover_art_path / 'small.dds')).exists():
                 shutil.copy2(src_small_path, cover_out_paths.small)
 
+            # Song BG video
+            bg_video_path = get_internal_bg_video_path_for_song_id(song_id=song.id)
+            if bg_video_path.exists():
+                shutil.copy2(
+                    bg_video_path,
+                    get_external_bg_video_path_for_song(song, game_dir)
+                )
+
         QMessageBox.information(parent, 'Export successful', 'All data has been successfully exported.')
 
     except Exception as e:
-        raise e
+        # raise e
         QMessageBox.critical(parent,
                              'Error Exporting Data',
                              f'An error occured when exporting data. ({type(e)}: {e})')

@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -13,7 +14,7 @@ if __name__ == '__main__':
 
     # TODO: Check if FFmpeg is in path if no local version is found
     if not FFMPEG_PATH.exists():
-        raise EnvironmentError(f"No file is found at {FFMPEG_PATH}. \nPlease add an FFmpeg executable.")
+        raise EnvironmentError(f"No file is found at: \n\t{FFMPEG_PATH}\nPlease add an FFmpeg executable.")
 
     app = QApplication(sys.argv)
     app.setApplicationName("SenDT UI")

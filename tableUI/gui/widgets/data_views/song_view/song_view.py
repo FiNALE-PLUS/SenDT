@@ -13,7 +13,7 @@ from tableUI.gui.actions.add_song import addSong
 from tableUI.gui.actions.add_song_charts import addCharts
 from tableUI.gui.dialogues.edit_charts import ChartManagementDialog
 from tableUI.gui.stylesheets.frame import get_outlined_frame_stylesheet
-from tableUI.gui.widgets.data_views.song_view.components.cong_cover_art_view import InteractableSongCoverArtDisplay
+from tableUI.gui.widgets.data_views.song_view.components.cover_art_and_bg_video_view import CoverArtDisplayWithBGVideoPreview
 from tableUI.gui.widgets.data_views.song_view.components.song_difficulty_view import SongDifficultyView
 from tableUI.gui.widgets.utils.titles import FinaleSongTitleWidget
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString, DoubleQuotedString
@@ -43,7 +43,7 @@ class SongView(QFrame):
         self.song = song
         self.db_session = session
 
-        self.cover_art_widget = InteractableSongCoverArtDisplay(self.song)
+        self.cover_art_widget = CoverArtDisplayWithBGVideoPreview(self.song)
 
 
         main_layout = QVBoxLayout()

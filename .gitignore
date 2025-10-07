@@ -1,6 +1,7 @@
 # SenDT specific
 /.env
 /tableUI/data/user/*
+/tableUI/data/user_data/*
 /tableUI/data/table_data.sqlite
 /tableUI/bin/ffmpeg.exe
 

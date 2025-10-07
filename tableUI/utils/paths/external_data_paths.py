@@ -68,3 +68,8 @@ def get_local_cover_art_paths_for_song(song: Song):
     return CoverArtPaths(
         full_size=Path.joinpath(song.full_size),
     )
+
+def get_external_bg_video_path_for_song(song: Song, base_dir: Path):
+    video_dir = base_dir / 'data' / 'movie'
+
+    return video_dir / f'{song.id:03}_mmv_{DoubleQuotedString.remove_quotes(song.filename)}.wmv'

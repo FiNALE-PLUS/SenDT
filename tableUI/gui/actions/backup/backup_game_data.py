@@ -6,8 +6,9 @@ from sqlmodel import Session, select
 
 from tableUI.db.models import Song
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
-from tableUI.utils.paths.external_data_paths import get_cover_art_paths_for_song, get_encrypted_table_paths, get_table_dir, \
-    get_chart_dir
+from tableUI.utils.paths.external_data_paths import get_cover_art_paths_for_song, get_encrypted_table_paths, \
+    get_table_dir, \
+    get_chart_dir, get_external_soundbgm_path
 
 
 class BackupDirs(NamedTuple):
@@ -33,6 +34,14 @@ def backup_tables(in_path: Path, out_path: Path):
     shutil.copy2(tables_in.textout_jp, tables_out.textout_jp)
 
 
+def backup_soundbgm(in_path: Path, out_path: Path):
+
+    backup_output_path = get_external_soundbgm_path(out_path)
+    backup_output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(get_external_soundbgm_path(in_path), out_path)
+
+
 def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
     """
     Copies all data that could be overwritten by SenDT from ``in_path`` to ``out_path``.
@@ -46,12 +55,14 @@ def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
     if not out_path.is_dir() and out_path.exists():
         raise ValueError('The given output path does not exist.')
 
-    songs_to_backup = session.exec(select(Song).where(not Song.is_vanilla)).all()
+    songs_to_backup = session.exec(select(Song).where(Song.is_vanilla == False)).all()
 
     if songs_to_backup:
         out_path.mkdir(parents=False, exist_ok=False)
 
+        # Data table files and SoundBGM
         backup_tables(in_path, out_path)
+        backup_soundbgm(in_path, out_path)
 
         chart_in_dir = get_chart_dir(in_path)
         chart_out_dir = get_chart_dir(out_path)

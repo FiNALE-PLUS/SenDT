@@ -73,3 +73,7 @@ def get_external_bg_video_path_for_song(song: Song, base_dir: Path):
     video_dir = base_dir / 'data' / 'movie'
 
     return video_dir / f'{song.id:03}_mmv_{DoubleQuotedString.remove_quotes(song.filename)}.wmv'
+
+
+def get_external_soundbgm_path(base_dir: Path):
+    return base_dir / 'data' / 'SoundBGM.txt'

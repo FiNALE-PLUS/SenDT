@@ -9,6 +9,8 @@ from sqlmodel import Session
 from tableUI.const import DATA_PATH, FFMPEG_PATH
 from tableUI.db.initialise import init_db
 from tableUI.gui import SenDTuiWindow
+from tableUI.parsers.tables.table_types.sound_bgm.table import build_soundbgm_from_session, \
+    write_session_soundbgm_to_path
 
 if __name__ == '__main__':
 
@@ -27,6 +29,7 @@ if __name__ == '__main__':
     engine = init_db(DATA_PATH / 'table_data.sqlite')
 
     with Session(engine) as session:
+
         app.setStyle('Fusion')
         window = SenDTuiWindow(session)
         window.show()

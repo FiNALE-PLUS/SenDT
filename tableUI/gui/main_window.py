@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 
 from tableUI.db.models import Chart
 from tableUI.gui.actions.export.export_data import export_data
+from tableUI.gui.dialogues.settings import SenDTSettingsDialog
 from tableUI.gui.widgets.data_views.song_view import SongTableView, SearchableSongTableView
 from tableUI.gui.widgets.data_views.chart import ChartTableView, ChartView
 
@@ -40,7 +41,11 @@ class SenDTuiWindow(QMainWindow):
 
     def setup_toolbar(self):
         file_menu = self.menuBar().addMenu('&File')
-        export_action = file_menu.addAction('&Export data to game...')
+        settings_action = file_menu.addAction('&Settings')
+        settings_action.triggered.connect(self.openSettings)
+
+        data_menu = self.menuBar().addMenu('&Data')
+        export_action = data_menu.addAction('&Export data to game...')
         export_action.triggered.connect(self.exportData)
 
 
@@ -50,3 +55,10 @@ class SenDTuiWindow(QMainWindow):
 
         if selected_dir:
             export_data(self.db_session, Path(selected_dir), self)
+
+
+    @Slot()
+    def openSettings(self):
+        settings_dialog = SenDTSettingsDialog(parent=self)
+
+        settings_dialog.open()

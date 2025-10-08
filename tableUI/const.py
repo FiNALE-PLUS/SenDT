@@ -8,6 +8,8 @@ BINARY_DIR = BASE_DIR / 'bin'
 FFMPEG_PATH = BINARY_DIR / 'ffmpeg.exe'
 
 DATA_PATH = BASE_DIR / 'data'
+SETTINGS_PATH = DATA_PATH / 'settings.json'
+
 BACKUP_PATH = DATA_PATH / 'backups'
 USER_DATA_PATH = DATA_PATH / 'user_data'
 

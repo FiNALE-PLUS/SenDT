@@ -5,5 +5,5 @@ from tableUI.utils.settings.models.data import DataSettings
 
 
 class SenDTSettings(BaseModel):
-    backup_settings: BackupSettings = BackupSettings()
+    backup: BackupSettings = BackupSettings()
     data: DataSettings = DataSettings()

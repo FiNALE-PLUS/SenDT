@@ -1,9 +1,6 @@
-from pathlib import Path
-from typing import Annotated
+from pydantic import BaseModel
 
-from pydantic import BaseModel, AfterValidator
-
-from tableUI.utils.settings.models.validation.paths import existing_absolute_directory_validation, optionalExistingAbsoluteDirectory
+from tableUI.utils.settings.models.field_models.paths.existing_dir import optionalExistingAbsoluteDirectory
 
 
 class BackupSettings(BaseModel, validate_assignment=True):

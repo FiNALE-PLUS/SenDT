@@ -18,4 +18,4 @@ def existing_absolute_directory_validation(path: Path | None):
     return path
 
 
-optional_existing_absolute_directory = Annotated[Path | None, AfterValidator(existing_absolute_directory_validation)]
+optionalExistingAbsoluteDirectory = Annotated[Path | None, AfterValidator(existing_absolute_directory_validation)]

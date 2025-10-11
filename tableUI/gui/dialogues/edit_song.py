@@ -11,6 +11,7 @@ from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
 from tableUI.db.models import Song, SongGenre
+from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completion_buttons
 from tableUI.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
 from tableUI.gui.widgets.edit_song.artist_panel import SongEditArtistPanel
 from tableUI.gui.widgets.edit_song.flag_panel import SongEditFlagPanel
@@ -49,9 +50,10 @@ class SongManagementDialog(QDialog):
         self.setWindowTitle(window_title)
 
         # Accept & Reject buttons
-        self.buttonBox = QHBoxLayout()
-        self.buttonBox.setAlignment(Qt.AlignmentFlag.AlignBottom)
-        self.add_completion_buttons_to_button_box()
+        dialog_completion_button_components = get_dialog_completion_buttons()
+        self.buttonBox = dialog_completion_button_components.layout
+        dialog_completion_button_components.accept_button.clicked.connect(self.validate_song_configuration_to_accept)
+        dialog_completion_button_components.reject_button.clicked.connect(self.reject)
 
         # Song editing Form
         song_info_layout = QVBoxLayout()
@@ -480,14 +482,5 @@ class SongManagementDialog(QDialog):
         name_jp = TextoutQuotedString('japanese safename')
 
         return Song()
-
-    def add_completion_buttons_to_button_box(self):
-        accept_button = QPushButton("Accept")
-        accept_button.clicked.connect(self.validate_song_configuration_to_accept)
-        reject_button = QPushButton("Cancel")
-        reject_button.clicked.connect(self.reject)
-        self.buttonBox.addStretch()
-        self.buttonBox.addWidget(accept_button)
-        self.buttonBox.addWidget(reject_button)
 
 

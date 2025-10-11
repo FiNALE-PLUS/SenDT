@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 from tableUI.db.models import Song, Chart, ChartCreator, ChartDifficultyLevel
 from tableUI.gui.stylesheets.frame import get_outlined_frame_stylesheet, get_highlight_outlined_frame_stylesheet, \
     get_tab_highlight_outlined_frame_stylesheet
+from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completion_buttons
 from tableUI.gui.widgets.edit_charts.models import ChartConfigProperties
 from tableUI.gui.widgets.edit_charts.panels.base_chart import SingleBaseChartConfigurationPanel, \
     SongBaseChartConfigurationPanel
@@ -43,10 +44,11 @@ class ChartManagementDialog(QDialog):
         self.tabs.addTab(self.base_chart_config_widget, '&Base Charts')
 
         # Accept & Reject buttons
-        self.buttonBox = QHBoxLayout()
-        self.buttonBox.setAlignment(Qt.AlignmentFlag.AlignBottom)
-        self.add_completion_buttons_to_button_box()
-        main_layout.addLayout(self.buttonBox)
+        completion_button_components = get_dialog_completion_buttons()
+        self.completionButtonLayout = completion_button_components.layout
+        completion_button_components.accept_button.clicked.connect(self.handleAcceptPressed)
+        completion_button_components.reject_button.clicked.connect(self.reject)
+        main_layout.addLayout(self.completionButtonLayout)
 
     def fillChartsFromForm(self):
         base_chart_configurations = self.base_chart_config_widget.getBaseChartConfigurations()
@@ -64,14 +66,5 @@ class ChartManagementDialog(QDialog):
 
     def handleAcceptPressed(self):
         self.fillChartsFromForm()
-
-    def add_completion_buttons_to_button_box(self):
-        accept_button = QPushButton("Accept")
-        accept_button.clicked.connect(self.handleAcceptPressed)
-        reject_button = QPushButton("Cancel")
-        reject_button.clicked.connect(self.reject)
-        self.buttonBox.addStretch()
-        self.buttonBox.addWidget(accept_button)
-        self.buttonBox.addWidget(reject_button)
 
 

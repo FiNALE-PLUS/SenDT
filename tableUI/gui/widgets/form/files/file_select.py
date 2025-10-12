@@ -1,9 +1,17 @@
 from PIL import Image
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QFileDialog, QWidget
 
 exts = Image.registered_extensions()
 
+
 class FileSelectRow(QHBoxLayout):
+
+    pathSelected = Signal()
+
+    def __init__(self, parent=None):
+        super(FileSelectRow, self).__init__(parent)
+
     dialog_caption: str = 'Select File'
     dir: str = ''
     filter: str = 'All Files (*)'
@@ -17,17 +25,35 @@ class FileSelectRow(QHBoxLayout):
 
         self.addWidget(self.file_path_entry)
         self.addWidget(self.browse_button)
-        self.browse_button.clicked.connect(self.browse)
+        self.browse_button.clicked.connect(self._browse_for_expected_path)
 
-    def browse(self):
+    def _browse_for_expected_path(self):
+        """
+        Wraps the class' ``browse()`` function, ensuring that a signal is
+        emitted if a path is chosen and meets its validation standards.
+        """
+        path = self.browse()
+
+        if path is not None:
+            self.pathSelected.emit()
+
+    def browse(self) -> str | None:
+        """
+        Denotes both the row's query for the user to select a path, and validation to ensure that the path is suitable.
+        This should be overridden by subclasses to alder the paths collected and validated, if necessary.
+
+        :return: A string representing the valid selected path if one was chosen, else ``None``.
+        """
         fileName, filter = QFileDialog.getOpenFileName(self.widget(),
                                                        self.dialog_caption,
                                                        self.dir,
                                                        self.filter)
         if fileName:
             self.file_path_entry.setText(fileName)
+            return fileName
+        return None
 
-    def getFilePath(self):
+    def getCurrentPath(self):
         return self.file_path_entry.text()
 
 

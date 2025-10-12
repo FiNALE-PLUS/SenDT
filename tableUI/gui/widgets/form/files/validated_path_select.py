@@ -22,6 +22,14 @@ class ValidatedDirectorySelectRow(DirectorySelectRow):
     def validate_input_data(cls, path: str):
         TypeAdapter(cls.path_validation_model).validate_python(path)
 
+    def setCurrentPath(self, path: str):
+        """
+        Enforces validation of the path before setting, guaranteeing that path values
+        set programmatically are subject to the same validation as those set by the user.
+        """
+        self.validate_input_data(path)
+        super().setCurrentPath(path)
+
     def __init__(self, parent=None):
         DirectorySelectRow.__init__(self, parent)
 

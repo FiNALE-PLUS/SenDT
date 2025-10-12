@@ -9,3 +9,4 @@ class BackupSettings(BaseModel, validate_assignment=True):
     bg_videos: bool = True
     charts: bool = True
     cover_art: bool = True
+    tables: bool = True

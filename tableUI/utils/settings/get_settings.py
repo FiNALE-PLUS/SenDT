@@ -5,13 +5,16 @@ from pydantic import ValidationError
 from tableUI.const import SETTINGS_PATH
 from tableUI.utils.settings.models.sendt_settings import SenDTSettings
 
-def write_settings_to_database(settings: SenDTSettings):
-    if not SETTINGS_PATH.exists():
-        with open(SETTINGS_PATH, 'w') as f:
-            f.write(settings.model_dump_json(indent=2))
 
-def write_default_settings_to_data():
-    write_settings_to_database(SenDTSettings())
+def write_settings_to_default_file(settings: SenDTSettings):
+    # if not SETTINGS_PATH.exists():
+    with open(SETTINGS_PATH, 'w') as f:
+        f.write(settings.model_dump_json(indent=2))
+
+
+def write_default_settings_to_default_file():
+    write_settings_to_default_file(SenDTSettings())
+
 
 def get_sendt_settings() -> SenDTSettings:
     settings = None
@@ -19,7 +22,7 @@ def get_sendt_settings() -> SenDTSettings:
         with open(SETTINGS_PATH, "r") as f:
             settings = SenDTSettings().model_validate_json(f.read())
     except FileNotFoundError:
-        write_default_settings_to_data()
+        write_default_settings_to_default_file()
     except ValidationError:
         # Move invalid settings file using backup extension
         extension = '.json.bak'
@@ -33,7 +36,7 @@ def get_sendt_settings() -> SenDTSettings:
             backup_path = backup_path.with_suffix(extension)
         shutil.move(SETTINGS_PATH, backup_path)
         # Replace with default settings
-        write_default_settings_to_data()
+        write_default_settings_to_default_file()
     finally:
         if settings is None:
             settings = SenDTSettings()

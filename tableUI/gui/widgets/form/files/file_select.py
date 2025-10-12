@@ -57,6 +57,9 @@ class FileSelectRow(QHBoxLayout):
     def getCurrentPath(self):
         return self.file_path_entry.text()
 
+    def setCurrentPath(self, path: str):
+        self.file_path_entry.setText(path)
+
 
 class ImageSelectRow(FileSelectRow):
     dialog_caption: str = 'Select Image'

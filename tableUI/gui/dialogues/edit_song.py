@@ -3,8 +3,7 @@ from typing import Iterable
 
 from PIL import Image
 from PySide6.QtCore import Signal, Slot, QThreadPool
-from PySide6.QtGui import Qt
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QFormLayout, \
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QFormLayout, \
     QSpinBox, QComboBox, QGroupBox, QDoubleSpinBox, QMessageBox, QProgressDialog
 from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound
@@ -15,7 +14,7 @@ from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completi
 from tableUI.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
 from tableUI.gui.widgets.edit_song.artist_panel import SongEditArtistPanel
 from tableUI.gui.widgets.edit_song.flag_panel import SongEditFlagPanel
-from tableUI.gui.widgets.files.file_select import ImageSelectRow, VideoSelectRow
+from tableUI.gui.widgets.form.files.file_select import ImageSelectRow, VideoSelectRow
 from tableUI.gui.widgets.form.double_range import DoubleRangeSpinBoxes
 from tableUI.gui.widgets.form.lang_entry import GroupBoxedTextoutLangEntries
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString

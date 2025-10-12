@@ -10,9 +10,6 @@ class DirectorySelectRow(FileSelectRow):
 
         self.browse_button.setText("Select Folder...")
 
-    def browse(self) -> str | None:
+    def get_user_path_selection(self) -> str | None:
         dirName = QFileDialog.getExistingDirectory(self.widget(), "Select Folder...")
-        if dirName:
-            self.file_path_entry.setText(dirName)
-            return dirName
-        return None
+        return dirName

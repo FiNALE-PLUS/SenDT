@@ -6,11 +6,7 @@ exts = Image.registered_extensions()
 
 
 class FileSelectRow(QHBoxLayout):
-
     pathSelected = Signal()
-
-    def __init__(self, parent=None):
-        super(FileSelectRow, self).__init__(parent)
 
     dialog_caption: str = 'Select File'
     dir: str = ''
@@ -37,6 +33,14 @@ class FileSelectRow(QHBoxLayout):
         if path is not None:
             self.pathSelected.emit()
 
+    def get_user_path_selection(self) -> str | None:
+        fileName, _ = QFileDialog.getOpenFileName(self.widget(),
+                                                  self.dialog_caption,
+                                                  self.dir,
+                                                  self.filter)
+
+        return fileName
+
     def browse(self) -> str | None:
         """
         Denotes both the row's query for the user to select a path, and validation to ensure that the path is suitable.
@@ -44,10 +48,7 @@ class FileSelectRow(QHBoxLayout):
 
         :return: A string representing the valid selected path if one was chosen, else ``None``.
         """
-        fileName, filter = QFileDialog.getOpenFileName(self.widget(),
-                                                       self.dialog_caption,
-                                                       self.dir,
-                                                       self.filter)
+        fileName = self.get_user_path_selection()
         if fileName:
             self.file_path_entry.setText(fileName)
             return fileName

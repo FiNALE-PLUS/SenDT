@@ -6,6 +6,7 @@ from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completi
 from tableUI.gui.widgets.form.files.directory_select import DirectorySelectRow
 from tableUI.gui.widgets.form.files.validated_path_select import FinaleInstallSelectRow
 from tableUI.gui.widgets.settings.backup_settings_flag_panel import BackupFileTypesFlagPanel, BackupFileTypesFlags
+from tableUI.gui.widgets.settings.crypt_key_management_panel import CryptKeyManagementPanel
 from tableUI.utils.settings.get_settings import get_sendt_settings, write_default_settings_to_default_file, \
     write_settings_to_default_file
 from tableUI.utils.settings.models.field_models.paths.game_dir import optionalFinaleInstallDirectory
@@ -44,6 +45,10 @@ class SenDTSettingsDialog(QDialog):
         backup_settings_box.setLayout(backup_settings_layout)
         self.backup_file_types_panel = BackupFileTypesFlagPanel()
         backup_settings_layout.addWidget(self.backup_file_types_panel)
+
+        # Encryption keys
+        crypt_keys_box = CryptKeyManagementPanel(self.current_settings.keys)
+        dialog_layout.addWidget(crypt_keys_box)
 
 
         # TODO: Add other settings

@@ -225,7 +225,7 @@ class SongManagementDialog(QDialog):
         :return:
         """
 
-        cover_art_path_text = self.cover_art_file_select.getFilePath()
+        cover_art_path_text = self.cover_art_file_select.getCurrentPath()
         if cover_art_path_text:
             cover_art_path = Path(cover_art_path_text)
             if cover_art_path.exists():
@@ -286,7 +286,7 @@ class SongManagementDialog(QDialog):
 
         # Emit configured song to be added to DB
 
-        if self.bg_video_file_select.getFilePath():
+        if self.bg_video_file_select.getCurrentPath():
             dialog = None
             try:
                 dialog = QProgressDialog(
@@ -302,7 +302,7 @@ class SongManagementDialog(QDialog):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
 
                 transcode_worker = BackgroundVideoTranscodeWorker(
-                    input_path=Path(self.bg_video_file_select.getFilePath()),
+                    input_path=Path(self.bg_video_file_select.getCurrentPath()),
                     output_path=output_path,
                 )
 

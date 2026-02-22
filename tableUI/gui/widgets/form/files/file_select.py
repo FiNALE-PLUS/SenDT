@@ -72,3 +72,29 @@ class VideoSelectRow(FileSelectRow):
     dir: str = ''
     filter: str = (f'Video Files (*.mp4 *.m4v *.mkv *.flv *.f4v *.avi *.wmv *.mov *.webm *.ogv);; '
                    f'All Files (*)')
+
+
+class SentakkiSelectRow(FileSelectRow):
+    dialog_caption: str = 'Select Sentakki Chart'
+    dir: str = ''
+    filter: str = (f'Sentakki Chart Files (*.simai *.txt);; '
+                   f'All Files (*)')
+
+
+class FileSaveRow(FileSelectRow):
+    dialog_caption: str = 'Save File'
+
+    def get_user_path_selection(self) -> str | None:
+        fileName, _ = QFileDialog.getSaveFileName(self.widget(),
+                                                  self.dialog_caption,
+                                                  self.dir,
+                                                  self.filter)
+
+        return fileName
+
+
+class SentakkiSaveRow(FileSaveRow):
+    dialog_caption: str = 'Save Sentakki Chart'
+    dir: str = ''
+    filter: str = (f'FiNALE Chart Files (*.sdb);; '
+                   f'All Files (*)')

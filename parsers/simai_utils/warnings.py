@@ -2,7 +2,7 @@ import warnings
 
 from colorama import Fore, Style
 
-from errors.chart import ChartWarning, ChartFeatureWarning
+from errors.chart import ChartWarning, ChartFeatureWarning, ChartUserWarning
 from errors.sentakki_simai import SentakkiCommentWarning
 
 
@@ -20,6 +20,10 @@ def chart_warn(message: str, chart_fragment: str, chart_time: float, line_num: i
 
 def chart_feature_warn(message: str, chart_fragment: str, chart_time: float, line_num: int):
     return chart_warn(message, chart_fragment, chart_time, line_num, ChartFeatureWarning)
+
+
+def chart_user_warn(message: str, chart_fragment: str, chart_time: float, line_num: int):
+    return chart_warn(message, chart_fragment, chart_time, line_num, ChartUserWarning)
 
 
 def sentakki_comment_warn(message: str, key: str, value: str, line_num: int):

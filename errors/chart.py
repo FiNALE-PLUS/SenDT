@@ -55,3 +55,9 @@ class ChartWarning(UserWarning):
 
 class ChartFeatureWarning(ChartWarning):
     pass
+
+
+class ChartUserWarning(ChartWarning):
+    """Used to denote a warning intended for a user to look over within the source.
+    Generally a result of an element that is valid, but may be unintentionally included."""
+    pass

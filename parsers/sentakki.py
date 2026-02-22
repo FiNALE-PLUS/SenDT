@@ -25,7 +25,7 @@ from parsers.sentakki_sdt.slides import get_slide_count_in_separated_slide_slot,
     parse_sentakki_slide_note, get_button_slide_counts_from_note_slot
 from parsers.simai_utils.chart import simai_to_SDT_note_position
 from parsers.simai_utils.timing import measures_to_seconds, seconds_to_measures
-from parsers.simai_utils.warnings import chart_feature_warn
+from parsers.simai_utils.warnings import chart_feature_warn, chart_warn, chart_user_warn
 from parsers.regex_patterns.sentakki import *
 
 
@@ -51,11 +51,12 @@ def get_chart_bpm(chart: str):
 
     return bpm
 
-            #chart_bpm / (cur_bpm * length_divider)
+    #chart_bpm / (cur_bpm * length_divider)
 
     cur_measures += chart_bpm / (cur_bpm * length_divider)
-            #seconds * (chart_bpm / (cur_bpm * 4))
-            # ((seconds * bpm) / 60) / (cur_divider / 4)
+    #seconds * (chart_bpm / (cur_bpm * 4))
+    # ((seconds * bpm) / 60) / (cur_divider / 4)
+
 
 # def measures_():
 #     return chart_bpm / (cur_bpm * length_divider)
@@ -76,7 +77,8 @@ def parse_sentakki_slide_note_slot(note: str, note_match: re.Match, combined: bo
     #  (Regex encompassing combined and not combined? if-else?)
 
 
-def parse_sentakki_finale_chart(chart: str, chart_bpm: float | None = None) -> tuple[list[SDTFinaleNote], dict[str, str]]:
+def parse_sentakki_finale_chart(chart: str, chart_bpm: float | None = None) -> tuple[
+    list[SDTFinaleNote], dict[str, str]]:
     # TODO: Slide timing and delays are incorrect - look into conversions from seconds to measures, and also how sentakki exports slides
     #  Slide timings are in seconds.
 
@@ -88,9 +90,11 @@ def parse_sentakki_finale_chart(chart: str, chart_bpm: float | None = None) -> t
     if chart_bpm is None:
         chart_bpm = get_chart_bpm(chart)
         # chart_bpm = 30.0
-        print(f"Chart BPM detected: {chart_bpm} - Use this for tables. (All notes at other BPMs will be adjusted to match)")
+        print(
+            f"Chart BPM detected: {chart_bpm} - Use this for tables. (All notes at other BPMs will be adjusted to match)")
     else:
-        print(f"Using selected BPM for chart: {chart_bpm} - Use this for tables. (All notes at other BPMs will be adjusted to match)")
+        print(
+            f"Using selected BPM for chart: {chart_bpm} - Use this for tables. (All notes at other BPMs will be adjusted to match)")
     cur_bpm = chart_bpm
     cur_measures = 0.0
 
@@ -191,14 +195,20 @@ def parse_sentakki_finale_chart(chart: str, chart_bpm: float | None = None) -> t
                                 duration = float(hold_match.group("duration"))
 
                                 # Assumes final BPM is used for the whole chart
-                                notes.append(
-                                    SDTFinaleNote(
-                                        note_type=SDTNoteType.HOLD,
-                                        note_start_time=cur_chart_time,
-                                        note_location=location,
-                                        note_duration=seconds_to_measures(duration, chart_bpm, cur_bpm),
-                                    )
-                                )
+                                with warnings.catch_warnings(record=True) as hold_warnings:
+                                    notes.append(
+                                        SDTFinaleNote(
+                                            note_type=SDTNoteType.HOLD,
+                                            note_start_time=cur_chart_time,
+                                            note_location=location,
+                                            note_duration=seconds_to_measures(duration, chart_bpm, cur_bpm),
+                                        ))
+                                # Propagate 0 length warning up with information about where the note is
+                                if filter(lambda warn: warn.message == "Found 0 length note.", hold_warnings):
+                                    chart_user_warn("A hold note has been added with 0 length. "
+                                                    "This is valid, but should be checked if unintentional.", note,
+                                                    measures_to_seconds(cur_chart_time, chart_bpm),
+                                                    line_number)
 
                             # Redundant, but in return vastly simplifies unrecognised notes
                             elif full_slide_note_re.match(note) or combined_slide_note_re.match(note):
@@ -277,7 +287,7 @@ def convert_sentakki_file_to_SDT_string(input_path: str, pad_columns: bool, char
 
     else:
         for note in SDT_notes:
-            chart_string += str(note)+"\n"
+            chart_string += str(note) + "\n"
 
     return chart_string
 
@@ -288,7 +298,9 @@ def write_SDT_string_to_SDB_file(path: str, chart_string: str):
     with open(out.with_suffix(".sdb"), "wb") as f:
         f.write(finale_encrypt(CRYPT_KEY, bytes(chart_string, encoding="ascii")))
 
-def convert_sentakki_file_to_SDB_file(input_path: str, output_path: str, pad_columns: bool, chart_bpm: float | None = None):
+
+def convert_sentakki_file_to_SDB_file(input_path: str, output_path: str, pad_columns: bool,
+                                      chart_bpm: float | None = None):
     chart_string: str = convert_sentakki_file_to_SDT_string(input_path, pad_columns, chart_bpm)
 
     write_SDT_string_to_SDB_file(output_path, chart_string)
@@ -297,8 +309,8 @@ def convert_sentakki_file_to_SDB_file(input_path: str, output_path: str, pad_col
 # https://github.com/donmai-me/MaiConverter/blob/master/maiconverter/maicrypt/maifinalecrypt.py
 
 def finale_encrypt(
-    key: Union[str, bytes],
-    plaintext: bytes,
+        key: Union[str, bytes],
+        plaintext: bytes,
 ) -> bytes:
     if not isinstance(key, bytes):
         key = int(key.replace(" ", ""), 0).to_bytes(0x10, "big")

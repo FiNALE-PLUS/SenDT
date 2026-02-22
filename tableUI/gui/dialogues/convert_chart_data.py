@@ -1,8 +1,10 @@
+import warnings
+
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QDialog, QGroupBox, QFormLayout, QPushButton, QVBoxLayout, \
     QMessageBox, QDoubleSpinBox
 
-from errors.chart import ChartError
+from errors.chart import ChartError, ChartWarning
 from parsers.sentakki import get_chart_bpm, convert_sentakki_file_to_SDB_file
 from tableUI.gui.widgets.form.files.file_select import SentakkiSelectRow, SentakkiSaveRow
 
@@ -82,10 +84,16 @@ class ChartDataConversionDialog(QDialog):
                 return
 
         try:
-            convert_sentakki_file_to_SDB_file(
-                self.input_path_select.getCurrentPath(), self.output_path_select.getCurrentPath(),
-                True, self.bpm_select.value()
-            )
+            with warnings.catch_warnings(record=True, category=ChartWarning) as collected_chart_warnings:
+                convert_sentakki_file_to_SDB_file(
+                    self.input_path_select.getCurrentPath(), self.output_path_select.getCurrentPath(),
+                    True, self.bpm_select.value()
+                )
+            print(collected_chart_warnings)
+            # TODO: Change dialog to display chart warnings, and improve warning emission in `sentakki.py` for easier collection.
+            for warn in collected_chart_warnings:
+                print(warn.message)
+
 
             QMessageBox.information(self, "Chart Conversion Complete", "Chart(s) converted successfully.")
         except ChartError as e:

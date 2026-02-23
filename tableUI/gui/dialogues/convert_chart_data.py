@@ -116,7 +116,10 @@ class ChartDataConversionDialog(QDialog):
                                  "This is not always an issue, "
                                  "but is usually worth analysing "
                                  "for potential issues.")
-                warn_box.setDetailedText('\n'.join(tuple(ansi_escape.sub('', str(warning.message)) for warning in collected_chart_warnings)))
+                warn_box.setDetailedText(
+                    ansi_escape.sub('',
+                                    '\n'.join(tuple(str(warning.message) for warning in collected_chart_warnings)))
+                    )
                 warn_box.setIcon(QMessageBox.Icon.Warning)
                 warn_box.exec()
 

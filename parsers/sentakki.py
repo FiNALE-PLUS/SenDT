@@ -25,7 +25,7 @@ from parsers.sentakki_sdt.slides import get_slide_count_in_separated_slide_slot,
     parse_sentakki_slide_note, get_button_slide_counts_from_note_slot
 from parsers.simai_utils.chart import simai_to_SDT_note_position
 from parsers.simai_utils.timing import measures_to_seconds, seconds_to_measures
-from parsers.simai_utils.warnings import chart_feature_warn, chart_warn, chart_user_warn
+from parsers.simai_utils.warnings import chart_feature_warn, chart_warn, chart_user_warn, chart_unknown_warn
 from parsers.regex_patterns.sentakki import *
 
 
@@ -218,17 +218,24 @@ def parse_sentakki_finale_chart(chart: str, chart_bpm: float | None = None) -> t
                                         cur_measures, chart_bpm, cur_bpm, line_number,
                                     )
                                 except InvalidSlideNote:  # No slide note found
-                                    print("Slide note found as invalid.", note_slot)
+                                    chart_user_warn("Slide note found as invalid.", note,
+                                                    measures_to_seconds(cur_chart_time, chart_bpm),
+                                                    line_number)
+                                    # print("Slide note found as invalid.", note_slot)
                                 else:
                                     notes.extend(slide_note_components)
                                     cur_slide_id = new_slide_id
 
                             else:
-                                print(
-                                    Fore.LIGHTCYAN_EX +
-                                    f"Unrecognised note: {note} (Chart time: {measures_to_seconds(cur_chart_time, chart_bpm)}s, Line number: {line_number})"
-                                    + Style.RESET_ALL,
-                                )
+                                chart_unknown_warn("Unrecognised note.", note,
+                                                   measures_to_seconds(cur_chart_time, chart_bpm),
+                                                   line_number)
+
+                                # print(
+                                #     Fore.LIGHTCYAN_EX +
+                                #     f"Unrecognised note: {note} (Chart time: {measures_to_seconds(cur_chart_time, chart_bpm)}s, Line number: {line_number})"
+                                #     + Style.RESET_ALL,
+                                # )
 
                     # Assumes 4:4
                     # Move to next timing "slot" AFTER the note is added

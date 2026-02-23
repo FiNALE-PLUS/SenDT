@@ -1,3 +1,4 @@
+import re
 import warnings
 
 from PySide6.QtCore import Slot
@@ -8,9 +9,23 @@ from errors.chart import ChartError, ChartWarning
 from parsers.sentakki import get_chart_bpm, convert_sentakki_file_to_SDB_file
 from tableUI.gui.widgets.form.files.file_select import SentakkiSelectRow, SentakkiSaveRow
 
+# 7-bit C1 ANSI sequences
+# Used to remove colorisation used in the CLI
+# TODO: add args in CLI to remove need for retroactive removal
+ansi_escape = re.compile(r'''
+    \x1B  # ESC
+    (?:   # 7-bit C1 Fe (except CSI)
+        [@-Z\\-_]
+    |     # or [ for CSI, followed by a control sequence
+        \[
+        [0-?]*  # Parameter bytes
+        [ -/]*  # Intermediate bytes
+        [@-~]   # Final byte
+    )
+''', re.VERBOSE)
+
 
 class ChartDataConversionDialog(QDialog):
-
     min_bpm = 1
     max_bpm = 1000
     bpm_step = 1
@@ -89,13 +104,22 @@ class ChartDataConversionDialog(QDialog):
                     self.input_path_select.getCurrentPath(), self.output_path_select.getCurrentPath(),
                     True, self.bpm_select.value()
                 )
-            print(collected_chart_warnings)
-            # TODO: Change dialog to display chart warnings, and improve warning emission in `sentakki.py` for easier collection.
-            for warn in collected_chart_warnings:
-                print(warn.message)
 
+            if not collected_chart_warnings:
+                QMessageBox.information(self, "Chart Conversion Complete", "Chart(s) converted successfully.")
+            else:
+                # Builds a warning box including all warnings from the CLI in the more details section
+                warn_box = QMessageBox()
+                warn_box.setWindowTitle("Chart Conversion Complete")
+                warn_box.setText("The chart(s) converted successfully, "
+                                 "but with warnings emitted in the process. "
+                                 "This is not always an issue, "
+                                 "but is usually worth analysing "
+                                 "for potential issues.")
+                warn_box.setDetailedText('\n'.join(tuple(ansi_escape.sub('', str(warning.message)) for warning in collected_chart_warnings)))
+                warn_box.setIcon(QMessageBox.Icon.Warning)
+                warn_box.exec()
 
-            QMessageBox.information(self, "Chart Conversion Complete", "Chart(s) converted successfully.")
         except ChartError as e:
             QMessageBox.critical(self, "Error parsing chart",
                                  f"An error occurred when parsing chart: {str(e)}")

@@ -42,6 +42,11 @@ def backup_soundbgm(in_path: Path, out_path: Path):
     shutil.copy2(get_external_soundbgm_path(in_path), out_path)
 
 
+# TODO: Add backup and export of charts
+def backup_charts(in_path: Path, out_path: Path):
+    ...
+
+
 def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
     """
     Copies all data that could be overwritten by SenDT from ``in_path`` to ``out_path``.

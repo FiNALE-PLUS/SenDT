@@ -12,7 +12,7 @@ from tableUI.gui.actions.backup.backup_game_data import backup_game_data
 from tableUI.parsers.tables.table_types.sound_bgm.table import write_session_soundbgm_to_path
 from tableUI.utils.crypt.finale import encrypt_table_with_env_key
 from tableUI.utils.paths.external_data_paths import get_encrypted_table_paths, get_cover_art_paths_for_song, \
-    get_external_bg_video_path_for_song, get_external_soundbgm_path
+    get_external_bg_video_path_for_song, get_external_soundbgm_path, get_song_chart_dir
 from tableUI.utils.paths.internal_data_paths import get_internal_cover_art_paths_for_song_id, \
     get_internal_bg_video_path_for_song_id
 
@@ -21,7 +21,7 @@ def export_data(session: Session, game_dir: Path, parent: QWidget = None):
     try:
         backup_dir = BACKUP_PATH / datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-        print(backup_dir)
+        # print(backup_dir)
         backup_game_data(game_dir, backup_dir, session)
 
         table_contents = get_all_tables(session)

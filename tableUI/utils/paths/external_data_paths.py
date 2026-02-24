@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import NamedTuple
 
-from tableUI.db.models import Song
+from tableUI.db.models import Song, Chart
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 
 
@@ -63,11 +63,13 @@ def get_cover_art_paths_for_song(song: Song, base_dir: Path):
         small=base_dirs.small / f'{song.id:03}_mms_{unquoted_name}.dds',
     )
 
+
 def get_local_cover_art_paths_for_song(song: Song):
 
     return CoverArtPaths(
         full_size=Path.joinpath(song.full_size),
     )
+
 
 def get_external_bg_video_path_for_song(song: Song, base_dir: Path):
     video_dir = base_dir / 'data' / 'movie'
@@ -77,3 +79,12 @@ def get_external_bg_video_path_for_song(song: Song, base_dir: Path):
 
 def get_external_soundbgm_path(base_dir: Path):
     return base_dir / 'data' / 'SoundBGM.txt'
+
+
+def get_song_chart_dir(song: Song, base_dir: Path) -> Path:
+    # Force 4 digit width for future-proofing
+    return base_dir / 'data' / 'charts' / f'{song.id:04}'
+
+
+def get_chart_data_path(chart: Chart, base_dir: Path):
+    return get_song_chart_dir(chart.chart_song, base_dir) / f'{chart.difficulty_level_id:02}.sdb'

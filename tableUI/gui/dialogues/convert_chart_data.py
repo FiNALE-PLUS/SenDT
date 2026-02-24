@@ -1,5 +1,6 @@
 import re
 import warnings
+from pathlib import Path
 
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QDialog, QGroupBox, QFormLayout, QPushButton, QVBoxLayout, \
@@ -7,12 +8,15 @@ from PySide6.QtWidgets import QDialog, QGroupBox, QFormLayout, QPushButton, QVBo
 
 from errors.chart import ChartError, ChartWarning
 from parsers.sentakki import get_chart_bpm, convert_sentakki_file_to_SDB_file
+from tableUI.const import BASE_DIR
+from tableUI.db.models import Chart
 from tableUI.gui.widgets.form.files.file_select import SentakkiSelectRow, SentakkiSaveRow
+from tableUI.utils.paths.external_data_paths import get_chart_data_path
 
 # 7-bit C1 ANSI sequences
 # Used to remove colorisation used in the CLI
 # TODO: add args in CLI to remove need for retroactive removal
-ansi_escape = re.compile(r'''
+ansi_escape_pattern = re.compile(r'''
     \x1B  # ESC
     (?:   # 7-bit C1 Fe (except CSI)
         [@-Z\\-_]
@@ -30,7 +34,7 @@ class ChartDataConversionDialog(QDialog):
     max_bpm = 1000
     bpm_step = 1
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, chart: Chart | None = None):
         super(ChartDataConversionDialog, self).__init__(parent)
 
         self.setWindowTitle("Chart Data Conversion")
@@ -70,6 +74,19 @@ class ChartDataConversionDialog(QDialog):
         self.start_conversion_button.clicked.connect(self.convertCharts)
         dialog_layout.addWidget(self.start_conversion_button)
 
+        if chart is not None:
+            self.fill_form_from_chart_data(chart)
+
+    def fill_form_from_chart_data(self, chart):
+        self.output_path_select.setCurrentPath(str(get_chart_data_path(chart, BASE_DIR).absolute()))
+        self.output_path_select.file_path_entry.setEnabled(False)
+        self.output_path_select.browse_button.setEnabled(False)
+
+        self.bpm_select.setValue(chart.chart_song.bpm)
+        self.bpm_select.setEnabled(False)
+
+        self.infer_bpm.setEnabled(False)
+
     # TODO: Make validation more thorough
     def validateForm(self):
         if not self.input_path_select.getCurrentPath():
@@ -80,12 +97,11 @@ class ChartDataConversionDialog(QDialog):
     # TODO: Add batch conversion
     @Slot()
     def convertCharts(self):
-
         try:
             self.validateForm()
         except Exception as e:
             QMessageBox.critical(self, "Invalid Form input",
-                                 f"Your input could not be validated. Please check your input and try again. "
+                                 f"Your input could not be validated. Please check your input and try again."
                                  f"\n({str(e)})")
             return
 
@@ -100,6 +116,8 @@ class ChartDataConversionDialog(QDialog):
 
         try:
             with warnings.catch_warnings(record=True, category=ChartWarning) as collected_chart_warnings:
+                output_path = Path(self.output_path_select.getCurrentPath())
+                output_path.parent.mkdir(parents=True, exist_ok=True)
                 convert_sentakki_file_to_SDB_file(
                     self.input_path_select.getCurrentPath(), self.output_path_select.getCurrentPath(),
                     True, self.bpm_select.value()
@@ -111,15 +129,13 @@ class ChartDataConversionDialog(QDialog):
                 # Builds a warning box including all warnings from the CLI in the more details section
                 warn_box = QMessageBox()
                 warn_box.setWindowTitle("Chart Conversion Complete")
-                warn_box.setText("The chart(s) converted successfully, "
-                                 "but with warnings emitted in the process. "
-                                 "This is not always an issue, "
-                                 "but is usually worth analysing "
-                                 "for potential issues.")
+                warn_box.setText("The chart(s) converted successfully, but with warnings emitted in the process. "
+                                 "This is not always an issue, but is usually worth analysing for potential issues.")
                 warn_box.setDetailedText(
-                    ansi_escape.sub('',
-                                    '\n'.join(tuple(str(warning.message) for warning in collected_chart_warnings)))
-                    )
+                    ansi_escape_pattern.sub('',
+                                            '\n'.join(
+                                                tuple(str(warning.message) for warning in collected_chart_warnings)))
+                )
                 warn_box.setIcon(QMessageBox.Icon.Warning)
                 warn_box.exec()
 

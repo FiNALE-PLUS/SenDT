@@ -65,7 +65,6 @@ def get_cover_art_paths_for_song(song: Song, base_dir: Path):
 
 
 def get_local_cover_art_paths_for_song(song: Song):
-
     return CoverArtPaths(
         full_size=Path.joinpath(song.full_size),
     )
@@ -81,10 +80,21 @@ def get_external_soundbgm_path(base_dir: Path):
     return base_dir / 'data' / 'SoundBGM.txt'
 
 
-def get_song_chart_dir(song: Song, base_dir: Path) -> Path:
-    # Force 4 digit width for future-proofing
-    return base_dir / 'data' / 'charts' / f'{song.id:04}'
+def get_external_chart_path(chart: Chart, base_dir: Path, song_id_padding_length: int = 3) -> Path:
+    """
+    Gets the path in the Maimai FiNALE file tree based on the intended chart the file is intended to be used for.
 
-
-def get_chart_data_path(chart: Chart, base_dir: Path):
-    return get_song_chart_dir(chart.chart_song, base_dir) / f'{chart.difficulty_level_id:02}.sdb'
+    :param chart: The chart to get the file path for.
+    :param base_dir: The base directory for the file tree. This is expected to be within the root folder of
+    the file tree *(at the level including the executable for the game)*.
+    :param song_id_padding_length: The number of digits used to 0-pad the song ID. On a vanilla install,
+    this will always be 3 digits (the function's default value).
+    :return: The path that the respective chart's file should be located within the game install.
+    """
+    unquoted_name = DoubleQuotedString.remove_quotes(chart.chart_song.filename)
+    return (base_dir / 'data' / 'score' /
+            # Allow for adjustable 0-padding length
+            (f'{chart.song_id:0{song_id_padding_length}}_'
+             f'{unquoted_name}_'
+             f'{chart.difficulty_level_id:02}'
+             f'.sdb'))

@@ -11,7 +11,7 @@ from parsers.sentakki import get_chart_bpm, convert_sentakki_file_to_SDB_file
 from tableUI.const import BASE_DIR
 from tableUI.db.models import Chart
 from tableUI.gui.widgets.form.files.file_select import SentakkiSelectRow, SentakkiSaveRow
-from tableUI.utils.paths.external_data_paths import get_chart_data_path
+from tableUI.utils.paths.internal_data_paths import get_internal_chart_path
 
 # 7-bit C1 ANSI sequences
 # Used to remove colorisation used in the CLI
@@ -78,7 +78,7 @@ class ChartDataConversionDialog(QDialog):
             self.fill_form_from_chart_data(chart)
 
     def fill_form_from_chart_data(self, chart):
-        self.output_path_select.setCurrentPath(str(get_chart_data_path(chart, BASE_DIR).absolute()))
+        self.output_path_select.setCurrentPath(str(get_internal_chart_path(chart).absolute()))
         self.output_path_select.file_path_entry.setEnabled(False)
         self.output_path_select.browse_button.setEnabled(False)
 

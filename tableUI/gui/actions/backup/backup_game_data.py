@@ -42,9 +42,9 @@ def backup_soundbgm(in_path: Path, out_path: Path):
     shutil.copy2(get_external_soundbgm_path(in_path), out_path)
 
 
-# TODO: Add backup and export of charts
-def backup_charts(in_path: Path, out_path: Path):
-    ...
+# # TODO: Add backup and export of charts
+# def backup_charts(in_path: Path, out_path: Path):
+#     ...
 
 
 def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
@@ -53,7 +53,7 @@ def backup_game_data(in_path: Path, out_path: Path, session: Session) -> int:
 
     :param in_path: The source path to back up data from.
     :param out_path: The destination path to copy data to.
-    :param session: A database session containing the current state of the songlist.
+    :param session: A database session containing the current state of the song list.
     :return: The number of songs backed up.
     """
 

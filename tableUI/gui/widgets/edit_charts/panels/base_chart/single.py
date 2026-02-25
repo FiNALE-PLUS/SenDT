@@ -12,7 +12,7 @@ from tableUI.db.models import Chart, ChartCreator
 from tableUI.gui.dialogues.convert_chart_data import ChartDataConversionDialog
 from tableUI.gui.stylesheets.frame import get_outlined_frame_stylesheet
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
-from tableUI.utils.paths.external_data_paths import get_chart_data_path
+from tableUI.utils.paths.internal_data_paths import get_internal_chart_path
 
 
 class SingleBaseChartConfigurationPanel(QFrame):
@@ -71,7 +71,7 @@ class SingleBaseChartConfigurationPanel(QFrame):
     @Slot()
     def deleteChartFile(self):
         try:
-            os.remove(get_chart_data_path(self.chart, BASE_DIR))
+            os.remove(get_internal_chart_path(self.chart))
             QMessageBox.information(self, 'Chart File Deleted', 'The chart file has been successfully deleted.')
         except PermissionError:
             QMessageBox.critical(self, 'Permission Error', 'Permission has been denied to the file. '
@@ -96,7 +96,7 @@ class SingleBaseChartConfigurationPanel(QFrame):
             self.delete_chart_file_button.setEnabled(False)
 
     def checkChartFileAvailablity(self):
-        expected_path = get_chart_data_path(self.chart, BASE_DIR)
+        expected_path = get_internal_chart_path(self.chart)
 
         return expected_path.is_file()
 

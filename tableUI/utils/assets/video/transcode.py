@@ -4,12 +4,10 @@ from ffmpeg import FFmpeg, Progress
 
 from tableUI.const import FFMPEG_PATH
 
-KILOBYTE = 1024 * 1024
-
 
 # TODO: add configuration and worker for UI
 def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, output_path: Path,
-                                                          bitrate: int = 5 * KILOBYTE) -> FFmpeg:
+                                                          quality: int = 1) -> FFmpeg:
     """
     Returns a ``FFmpeg`` instance preconfigured to transcode an input video
     to one suitable for Maimai FiNALE when ``execute`` is called.
@@ -17,7 +15,7 @@ def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, outp
 
     :param input_path: The path of the input video to transcode.
     :param output_path: The path of the output video to write to. Note that the file extension will be ``wmv``.
-    :param bitrate: The bitrate of the output video. This defaults to 5kbps.
+    :param quality: The target video quality. Lower is higher quality and file size. Bitrate *is not* directly accessible via this function.
     :return: An ``FFmpeg`` instance that will transcode to the video at ``output_path``.
     """
     ffmpeg = (
@@ -32,9 +30,11 @@ def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, outp
             str(output_path.with_suffix('.wmv').absolute()),
             {
                 'vcodec': 'wmv2',
-                'b:v': bitrate,
-                # Forced 30 FPS
-                'r': 30,
+                # 'b:v': bitrate,
+                # 'b:v': bitrate,
+                'q:v': quality,
+                # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
+                # 'r': 30,
                 # 1:1 aspect ratio
                 'aspect': 1,
                 # Resize to 600x600 with black bars

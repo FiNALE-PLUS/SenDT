@@ -4,7 +4,7 @@ from typing import Any
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from ffmpeg import Progress
 
-from tableUI.utils.assets.video.transcode import KILOBYTE, create_ffmpeg_instance_for_background_video_transcode
+from tableUI.utils.assets.video.transcode import create_ffmpeg_instance_for_background_video_transcode
 
 class BGVideoSignalSet(QObject):
     # Actual type is list[str]
@@ -23,11 +23,11 @@ class BackgroundVideoTranscodeWorker(QRunnable):
     """
 
 
-    def __init__(self, input_path: Path, output_path: Path, bitrate: int = 5 * KILOBYTE):
+    def __init__(self, input_path: Path, output_path: Path, quality: int = 1):
         super().__init__()
         self.input_path = input_path
         self.output_path = output_path
-        self.bitrate = bitrate
+        self.quality = quality
         self.signals = BGVideoSignalSet()
 
     @Slot()
@@ -36,7 +36,7 @@ class BackgroundVideoTranscodeWorker(QRunnable):
         ffmpeg = create_ffmpeg_instance_for_background_video_transcode(
             input_path=self.input_path,
             output_path=self.output_path,
-            bitrate=self.bitrate
+            quality=self.quality
         )
 
         @ffmpeg.on('start')

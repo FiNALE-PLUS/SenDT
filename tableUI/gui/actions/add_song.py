@@ -1,10 +1,8 @@
-import time
-
 from PySide6.QtWidgets import QWidget, QMessageBox
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song, ChartDifficultyLevel, Chart
+from db.models import Song, ChartDifficultyLevel, Chart
 from tableUI.gui.dialogues.edit_song import SongManagementDialog
 from utils.finale.difficulties import FinaleChartDifficulty
 from utils.finale.flags import REMASTER_DISABLED

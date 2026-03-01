@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import CheckConstraint
 from sqlmodel import SQLModel, Field, Relationship
 
-
 if TYPE_CHECKING:
+    from .blobs import SdtChartBlob
     from .songs_and_charts import Chart
 
 
@@ -42,3 +42,6 @@ class UtageEntry(SQLModel, table=True):
     display: int
     skip: int
     judge: int
+
+    # chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
+    # utage_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_utage_charts')

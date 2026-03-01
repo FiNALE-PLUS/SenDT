@@ -1,16 +1,16 @@
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Slot
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QScreen
-from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QGroupBox, QHBoxLayout, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QVBoxLayout, QWidget, QGroupBox, QFileDialog
 from sqlmodel import Session, select
 
-from tableUI.db.models import Chart
+from db.models import Chart
 from tableUI.gui.actions.export.export_data import export_data
 from tableUI.gui.dialogues.convert_chart_data import ChartDataConversionDialog
 from tableUI.gui.dialogues.settings import SenDTSettingsDialog
-from tableUI.gui.widgets.data_views.song_view import SongTableView, SearchableSongTableView
-from tableUI.gui.widgets.data_views.chart import ChartTableView, ChartView
+from tableUI.gui.widgets.data_views.song_view import SearchableSongTableView
+from tableUI.gui.widgets.data_views.chart import ChartView
 
 
 class SenDTuiWindow(QMainWindow):

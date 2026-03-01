@@ -5,6 +5,9 @@ from pydantic import GetCoreSchemaHandler
 from pydantic_core import CoreSchema, core_schema
 
 
+# TODO: Removes classmethod & property chain for compatibility with python 3.13+,
+#  but the calls everywhere seem a bit messy.
+#  Look in future for an alternative once higher priorities are accounted for.
 class AbstractQuotedString(str, ABC):
     """
     Ensures that a string is surrounded by ``_quote_str``,
@@ -14,13 +17,11 @@ class AbstractQuotedString(str, ABC):
     """
 
     @classmethod
-    @property
     def _value_prefix(cls) -> str:
         return ((str(cls._prefix) if cls._prefix is not None else '')
                 + str(cls._quote_str))
 
     @classmethod
-    @property
     def _value_suffix(cls) -> str:
         return (str(cls._quote_str)
                 + (str(cls._suffix) if cls._suffix is not None else ''))
@@ -67,14 +68,14 @@ class AbstractQuotedString(str, ABC):
         initial_value = super().__new__(cls, content)
 
         # Value is already quoted correctly,
-        if (initial_value.startswith(cls._value_prefix)
-                and initial_value.endswith(cls._value_suffix)):
+        if (initial_value.startswith(cls._value_prefix())
+                and initial_value.endswith(cls._value_suffix())):
             # And is not within the contained value
-            if cls._quote_str not in initial_value[len(cls._value_prefix):-len(cls._value_suffix)]:
+            if cls._quote_str not in initial_value[len(cls._value_prefix()):-len(cls._value_suffix())]:
                 return initial_value
         # Unquoted values that *do not* contain the quote string
-        if (not initial_value.startswith(cls._value_prefix)
-                and not initial_value.endswith(cls._value_suffix)
+        if (not initial_value.startswith(cls._value_prefix())
+                and not initial_value.endswith(cls._value_suffix())
                 and str(cls._quote_str) not in initial_value):
             return cls._value_prefix + initial_value + cls._value_suffix
 
@@ -91,8 +92,8 @@ class AbstractQuotedString(str, ABC):
         guaranteed_quoted_string = cls(string)
 
         return guaranteed_quoted_string[
-            len(cls._value_prefix) if string.startswith(cls._value_prefix) else 0
-            :-len(cls._value_suffix) if string.endswith(cls._value_suffix) else len(string)
+            len(cls._value_prefix()) if string.startswith(cls._value_prefix()) else 0
+            :-len(cls._value_suffix()) if string.endswith(cls._value_suffix()) else len(string)
         ]
 
 

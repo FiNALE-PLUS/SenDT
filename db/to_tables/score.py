@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 
-from tableUI.db.models import Chart
+from db.models import Chart
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 from tableUI.parsers.tables.table_types.score.models import ScoreTable, ScoreRow
 

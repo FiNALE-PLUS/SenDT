@@ -1,11 +1,10 @@
 from pathlib import Path
 
 from PySide6.QtGui import QPixmap, Qt, QFont
-from PySide6.QtWidgets import QWidget, QGridLayout, QHBoxLayout, QLabel, QFrame, QVBoxLayout
-from sqlmodel import Session
+from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QFrame, QVBoxLayout
 
-from tableUI.db.models import Song
-from tableUI.gui.img.pixmap.difficulties import BASE_DIFF_30PX_PIXMAPS, UTAGE_DIFF_IMG_PATH, UTAGE_DIFF_30PX_PIXMAPS
+from db.models import Song
+from tableUI.gui.img.pixmap.difficulties import BASE_DIFF_30PX_PIXMAPS, UTAGE_DIFF_30PX_PIXMAPS
 from tableUI.gui.stylesheets.frame import get_highlight_outlined_frame_stylesheet
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 

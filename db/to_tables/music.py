@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song
+from db.models import Song
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 from tableUI.parsers.tables.table_types.music.models import MusicTable, MusicRow
 

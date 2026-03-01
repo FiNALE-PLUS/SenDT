@@ -2,7 +2,7 @@ import os
 
 from PySide6.QtWidgets import QPushButton
 
-from tableUI.db.models import Song
+from db.models import Song
 from tableUI.gui.widgets.data_views.song_view.components.cong_cover_art_view import InteractableSongCoverArtDisplay
 from tableUI.utils.paths.internal_data_paths import get_internal_bg_video_path_for_song_id
 

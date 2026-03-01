@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from tableUI.const import USER_DATA_PATH
-from tableUI.db.models import Song, Chart
+from db.models import Song, Chart
 
 
 def get_internal_cover_art_paths_for_song_id(song_id: int) -> Path:

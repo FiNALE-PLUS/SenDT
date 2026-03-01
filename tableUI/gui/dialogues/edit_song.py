@@ -9,7 +9,7 @@ from sqlalchemy import func
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song, SongGenre
+from db.models import Song, SongGenre
 from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completion_buttons
 from tableUI.utils.assets.song_cover.dds.convert import save_cover_textures_from_image
 from tableUI.gui.widgets.edit_song.artist_panel import SongEditArtistPanel

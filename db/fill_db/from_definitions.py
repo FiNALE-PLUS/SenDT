@@ -1,7 +1,7 @@
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from tableUI.db.models import SongGenre, UtageType, ChartDifficultyLevel
+from db.models import SongGenre, UtageType, ChartDifficultyLevel
 from utils.finale.difficulties import FinaleUtageType, FinaleChartDifficulty
 
 

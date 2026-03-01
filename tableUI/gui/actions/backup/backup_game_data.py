@@ -4,7 +4,7 @@ from typing import NamedTuple
 
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song
+from db.models import Song
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 from tableUI.utils.paths.external_data_paths import get_cover_art_paths_for_song, get_encrypted_table_paths, \
     get_table_dir, \

@@ -7,8 +7,7 @@ from PySide6.QtWidgets import QFrame, QVBoxLayout, QLabel, QFormLayout, QCheckBo
     QHBoxLayout, QPushButton, QMessageBox
 from sqlmodel import Session, select
 
-from tableUI.const import BASE_DIR
-from tableUI.db.models import Chart, ChartCreator
+from db.models import Chart, ChartCreator
 from tableUI.gui.dialogues.convert_chart_data import ChartDataConversionDialog
 from tableUI.gui.stylesheets.frame import get_outlined_frame_stylesheet
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString

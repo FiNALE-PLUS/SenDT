@@ -7,8 +7,8 @@ from sqlalchemy import Sequence
 from sqlmodel import Session, select
 
 from tableUI.const import BACKUP_PATH
-from tableUI.db.models import Song, Chart
-from tableUI.db.to_tables import get_all_tables
+from db.models import Song, Chart
+from db.to_tables import get_all_tables
 from tableUI.gui.actions.backup.backup_game_data import backup_game_data
 from tableUI.parsers.tables.table_types.sound_bgm.table import write_session_soundbgm_to_path
 from tableUI.utils.crypt.finale import encrypt_table_with_env_key

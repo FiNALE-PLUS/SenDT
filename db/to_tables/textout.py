@@ -1,9 +1,8 @@
-from collections import namedtuple
-from typing import TypedDict, NamedTuple
+from typing import NamedTuple
 
 from sqlmodel import Session, select
 
-from tableUI.db.models import ChartCreator, Song
+from db.models import ChartCreator, Song
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 from tableUI.parsers.tables.textout.models import FilledMusicTextoutExTable, FilledMusicTextoutJpTable, TextoutRow
 

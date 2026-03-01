@@ -6,6 +6,7 @@
 /tableUI/data/table_data.sqlite
 /tableUI/data/settings.json
 /tableUI/bin/ffmpeg.exe
+/private
 
 
 # Byte-compiled / optimized / DLL files

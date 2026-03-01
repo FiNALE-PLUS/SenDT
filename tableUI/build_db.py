@@ -3,10 +3,8 @@ from pathlib import Path
 
 from sqlmodel import Session
 
-from tableUI.db.fill_db.from_definitions import fill_db_predefined_data
-from tableUI.db.fill_db.from_tbl import fill_db_from_table_files
-from tableUI.db.to_tables.utils import get_all_tables
-from tableUI.db.initialise import init_db
+from db.fill_db import fill_db_predefined_data
+from db.initialise import init_db
 
 # TODO: Fill all *vanilla* data from tables
 

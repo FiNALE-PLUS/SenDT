@@ -4,13 +4,12 @@ from pathlib import Path
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select
 
-from tableUI.db.fill_db.validation import validate_textout_table_lengths_equal, validate_row_ids_at_same_index, \
+from db.fill_db.validation import validate_textout_table_lengths_equal, validate_row_ids_at_same_index, \
     validate_generic_table_lengths_equal, validate_generic_ids_match
-from tableUI.db.models import SongArtist, ChartCreator, Song, SongGenre, UtageEntry, Chart
+from db.models import SongArtist, ChartCreator, Song, SongGenre, UtageEntry, Chart
 from tableUI.parsers.parse import parse_plain_textout, parse_music_table, parse_score_table, parse_fes_list_table
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 from tableUI.parsers.tables.table_types.fes_list.models import FesListRow
-from tableUI.parsers.tables.table_types.music.models import MusicTable
 from tableUI.parsers.tables.textout.models import FilledMusicTextoutExTable, TextoutRow, column_name_patterns, \
     FilledMusicTextoutJpTable
 

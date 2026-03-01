@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QFormLayout, QLineEdit, QPushButton
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song
+from db.models import Song
 from tableUI.gui.actions.add_song import addSong
 from tableUI.gui.widgets.data_views.song_view.song_view import SongView
 

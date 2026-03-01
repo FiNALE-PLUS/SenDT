@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
+    from .blobs import SdtChartBlob
     from .utage import UtageEntry
 
 ### Chart models
@@ -64,6 +65,9 @@ class Chart(SQLModel, table=True):
     comment: str | None = Field(default=None)
 
     chart_utage_entry: 'UtageEntry' = Relationship(back_populates='utage_chart', cascade_delete=True)
+
+    # chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
+    # base_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_base_charts')
 
 ### Song Models
 

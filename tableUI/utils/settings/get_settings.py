@@ -42,3 +42,16 @@ def get_sendt_settings() -> SenDTSettings:
             settings = SenDTSettings()
 
     return settings
+
+
+def get_settings_default_crypt_key() -> bytes | None:
+    settings = get_sendt_settings()
+
+    if (default_key_name := settings.keys.default_key) is None:
+        return None
+
+    if not isinstance(default_key_name, str):
+        raise ValueError("default_key_name must be a string")
+
+    return bytes.fromhex(settings.keys.crypt_keys[default_key_name])
+

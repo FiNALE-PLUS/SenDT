@@ -1,6 +1,6 @@
 from sqlmodel import Session, select
 
-from tableUI.db.models import UtageEntry
+from db.models import UtageEntry
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 from tableUI.parsers.tables.table_types.fes_list.models import FesListTable, FesListRow
 

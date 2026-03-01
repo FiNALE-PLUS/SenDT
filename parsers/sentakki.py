@@ -299,7 +299,7 @@ def convert_sentakki_file_to_SDT_string(input_path: str, pad_columns: bool, char
     return chart_string
 
 
-def write_SDT_string_to_SDB_file(path: str, chart_string: str):
+def write_SDT_string_to_SDB_file(path: str, chart_string: str, key: bytes = CRYPT_KEY):
     out = Path(path)
 
     with open(out.with_suffix(".sdb"), "wb") as f:

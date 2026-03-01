@@ -3,7 +3,7 @@ from typing import List
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song, Chart
+from db.models import Song, Chart
 from tableUI.gui.widgets.edit_charts.panels.base_chart.single import SingleBaseChartConfigurationPanel
 
 

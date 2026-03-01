@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import NamedTuple
 
-from tableUI.db.models import Song, Chart
+from db.models import Song, Chart
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 
 

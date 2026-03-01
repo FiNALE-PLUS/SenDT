@@ -2,7 +2,7 @@ from typing import NamedTuple
 
 from PySide6.QtWidgets import QGridLayout, QGroupBox, QCheckBox
 
-from tableUI.db.models import Song
+from db.models import Song
 
 
 class SongFlagPair(NamedTuple):

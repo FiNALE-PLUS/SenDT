@@ -8,8 +8,7 @@ from PySide6.QtWidgets import QDialog, QGroupBox, QFormLayout, QPushButton, QVBo
 
 from errors.chart import ChartError, ChartWarning
 from parsers.sentakki import get_chart_bpm, convert_sentakki_file_to_SDB_file
-from tableUI.const import BASE_DIR
-from tableUI.db.models import Chart
+from db.models import Chart
 from tableUI.gui.widgets.form.files.file_select import SentakkiSelectRow, SentakkiSaveRow
 from tableUI.utils.paths.internal_data_paths import get_internal_chart_path
 

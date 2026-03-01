@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import NamedTuple
 
-from tableUI.db.models import ChartDifficultyLevel, ChartCreator
+from db.models import ChartDifficultyLevel, ChartCreator
 
 
 class ChartConfigProperties(NamedTuple):

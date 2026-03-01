@@ -1,20 +1,13 @@
-from decimal import Decimal
-from math import isclose
-from typing import List, Collection, Any, NamedTuple
+from typing import NamedTuple
 
 from PySide6.QtCore import Signal
-from PySide6.QtGui import Qt, QFont
-from PySide6.QtWidgets import QDialog, QFrame, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QTabWidget, QWidget, \
-    QFormLayout, QCheckBox, QDoubleSpinBox, QComboBox
-from sqlmodel import Session, select
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QTabWidget
+from sqlmodel import Session
 
-from tableUI.db.models import Song, Chart, ChartCreator, ChartDifficultyLevel
-from tableUI.gui.stylesheets.frame import get_outlined_frame_stylesheet, get_highlight_outlined_frame_stylesheet, \
-    get_tab_highlight_outlined_frame_stylesheet
+from db.models import Song
 from tableUI.gui.widgets.dialogues.completion_buttons import get_dialog_completion_buttons
 from tableUI.gui.widgets.edit_charts.models import ChartConfigProperties
-from tableUI.gui.widgets.edit_charts.panels.base_chart import SingleBaseChartConfigurationPanel, \
-    SongBaseChartConfigurationPanel
+from tableUI.gui.widgets.edit_charts.panels.base_chart import SongBaseChartConfigurationPanel
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 
 class ChartReconfigurationArgs(NamedTuple):

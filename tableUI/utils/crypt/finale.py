@@ -5,11 +5,13 @@ from binascii import unhexlify
 from typing import Union
 
 from Crypto.Cipher import AES
+from typing_extensions import deprecated
 
 from environment_vars import CRYPT_KEY
+from tableUI.utils.settings.get_settings import get_settings_default_crypt_key
 
 
-def encrypt_table(
+def encrypt_finale_file(
     key: Union[str, bytes],
     plaintext: bytes,
 ) -> bytes:
@@ -33,5 +35,15 @@ def encrypt_table(
     return iv + cipher.encrypt(gzipdata)
 
 
+def encrypt_file_with_default_settings_key(plaintext: bytes) -> bytes:
+    key = get_settings_default_crypt_key()
+
+    if key is None:
+        raise ValueError("no default key provided")
+
+    return encrypt_finale_file(key, plaintext)
+
+
+@deprecated("Use default key from `settings.json` instead")
 def encrypt_table_with_env_key(plaintext: bytes) -> bytes:
-    return encrypt_table(CRYPT_KEY, plaintext)
+    return encrypt_finale_file(CRYPT_KEY, plaintext)

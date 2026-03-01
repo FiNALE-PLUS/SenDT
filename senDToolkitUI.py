@@ -1,18 +1,13 @@
-import os
 import sys
-from pathlib import Path
 
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QSplashScreen
 from sqlmodel import Session
 
-from tableUI.const import DATA_PATH, FFMPEG_PATH, SETTINGS_PATH
-from tableUI.db.initialise import init_db
+from tableUI.const import DATA_PATH, FFMPEG_PATH
+from db.initialise import init_db
 from tableUI.gui import SenDTuiWindow
-from tableUI.parsers.tables.table_types.sound_bgm.table import build_soundbgm_from_session, \
-    write_session_soundbgm_to_path
 from tableUI.utils.settings.get_settings import get_sendt_settings
-from tableUI.utils.settings.models.sendt_settings import SenDTSettings
 
 if __name__ == '__main__':
     # TODO: Check if FFmpeg is in path if no local version is found

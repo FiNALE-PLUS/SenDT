@@ -1,11 +1,9 @@
 from PySide6.QtGui import Qt
-from PySide6.QtMultimedia import QMediaMetaData
-from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QRadioButton, QButtonGroup, QHBoxLayout, QComboBox, QDialog, \
-    QMessageBox
+from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QRadioButton, QButtonGroup, QHBoxLayout, QComboBox
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import select, Session
 
-from tableUI.db.models import Song, SongArtist
+from db.models import Song, SongArtist
 from tableUI.gui.widgets.form.lang_entry import GroupBoxedTextoutLangEntries
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
 

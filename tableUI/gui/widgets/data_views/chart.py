@@ -1,14 +1,10 @@
-from typing import Iterable
-
-from PySide6.QtGui import QPalette, Qt, QColor, QFont
-from PySide6.QtWidgets import QGroupBox, QScrollArea, QWidget, QVBoxLayout, QLabel, QHeaderView
+from PySide6.QtWidgets import QScrollArea, QWidget, QVBoxLayout, QLabel
 from sqlmodel import Session, select
 
-from tableUI.db.models import Chart
+from db.models import Chart
 from tableUI.gui.widgets.data_views.fonts import title_font
 from tableUI.gui.widgets.utils.burger_menu import BurgerMenu
 from tableUI.parsers.tables.field_types.quoted_string import TextoutQuotedString
-from tableUI.parsers.tables.table_types.abstract.row import TableRow
 
 
 class ChartView(QWidget):

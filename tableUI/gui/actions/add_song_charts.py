@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QWidget, QMessageBox
-from sqlmodel import Session, select
+from sqlmodel import Session
 
-from tableUI.db.models import Chart, Song
-from tableUI.gui.dialogues.edit_charts import ChartManagementDialog, ChartConfigProperties, ChartReconfigurationArgs
+from db.models import Chart, Song
+from tableUI.gui.dialogues.edit_charts import ChartManagementDialog
 
 
 def addCharts(session: Session, song: Song | None, parent: QWidget = None):

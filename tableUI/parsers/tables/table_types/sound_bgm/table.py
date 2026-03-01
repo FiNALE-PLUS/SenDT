@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sqlmodel import Session, select
 
-from tableUI.db.models import Song
+from db.models import Song
 from tableUI.parsers.tables.field_types.quoted_string import DoubleQuotedString
 
 HARDCODED_ROWS = r"""

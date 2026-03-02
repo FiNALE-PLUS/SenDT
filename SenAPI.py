@@ -1,7 +1,12 @@
 from fastapi import FastAPI, APIRouter
 
 from api.routers import auth_router, chart_router
-app = FastAPI()
+from db.session.models import configure_db_tables
+
+def on_startup():
+    configure_db_tables()
+
+app = FastAPI(on_startup=[on_startup]) # lifespan=lifespan
 
 v1_api_router = APIRouter(prefix="/api/v1")
 v1_api_router.include_router(chart_router)

@@ -43,5 +43,5 @@ class UtageEntry(SQLModel, table=True):
     skip: int
     judge: int
 
-    # chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
-    # utage_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_utage_charts')
+    chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
+    utage_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_utage_charts')

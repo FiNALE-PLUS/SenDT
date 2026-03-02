@@ -66,8 +66,8 @@ class Chart(SQLModel, table=True):
 
     chart_utage_entry: 'UtageEntry' = Relationship(back_populates='utage_chart', cascade_delete=True)
 
-    # chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
-    # base_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_base_charts')
+    chart_blob_id: int | None = Field(default=None, foreign_key="sdt_chart_blob.id")
+    base_chart_blob: 'SdtChartBlob' = Relationship(back_populates='blob_base_charts')
 
 ### Song Models
 

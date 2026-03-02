@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication, QSplashScreen
 from sqlmodel import Session
 
 from tableUI.const import DATA_PATH, FFMPEG_PATH
-from db.initialise import init_db
+from db.initialise import init_local_db
 from tableUI.gui import SenDTuiWindow
 from tableUI.utils.settings.get_settings import get_sendt_settings
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     app.setWindowIcon(QIcon(splash_pixmap))
 
-    engine = init_db(DATA_PATH / 'table_data.sqlite')
+    engine = init_local_db(DATA_PATH / 'table_data.sqlite')
 
     with Session(engine) as session:
 

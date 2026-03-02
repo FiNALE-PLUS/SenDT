@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlmodel import Session
 
 from db.fill_db import fill_db_predefined_data
-from db.initialise import init_db
+from db.initialise import init_local_db
 
 # TODO: Fill all *vanilla* data from tables
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
                                        r'|' + song_artist_pattern +
                                        r'|' + chart_creator_pattern)
 
-    engine = init_db(Path("./table_data"))
+    engine = init_local_db(Path("./table_data"))
 
     # TODO: Add data from songs (for artists, get ID by matching *both* textout artist rows for the song)
     with Session(engine) as session:

@@ -1,1 +1,1 @@
-from .initialise import init_db
+from .initialise import init_local_db

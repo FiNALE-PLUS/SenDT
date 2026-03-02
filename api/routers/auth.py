@@ -3,7 +3,7 @@ from typing import Annotated
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
 
 from jwt.exceptions import InvalidTokenError
 
@@ -51,12 +51,13 @@ def get_user_from_db(session: Session, username: str):
 
 
 
-def authenticate_user_from_db(session: Session, username: str, password: str):
+def authenticate_user_from_db(session: Session, username: str, password: str) -> User | None:
     try:
         db_user = session.exec(select(User).where(User.username == username)).one()
 
         if verify_password(password, db_user.hash):
-            return UserInDB(username=db_user.username)
+            return db_user
+            # return UserInDB(username=db_user.username)
         return None
     except NoResultFound:
         return None
@@ -92,7 +93,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
 
 
 @auth_router.post("/token")
-async def login_for_access_token(
+async def get_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: SessionDep
 ) -> Token:

@@ -24,6 +24,7 @@ auth_router = APIRouter(prefix='/auth')
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="token",
+    # TODO
     scopes={
         'songs:read': 'read song data',
         'songs:write': 'write song data'

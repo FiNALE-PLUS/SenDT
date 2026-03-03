@@ -4,6 +4,10 @@ from pydantic import BaseModel
 
 
 class ScopeAccessLevel(StrEnum):
+    """
+    Enumerates the available access possibilities for a particular scope.
+    """
+
     read = 'read'
     write = 'write'
     delete = 'delete'
@@ -15,6 +19,13 @@ class ScopeAccessLevel(StrEnum):
 
 
 class ScopeManager(BaseModel):
+    """
+    Manages the OAuth scopes of an authenticated user. Scope levels ``none`` and ``all``
+    override all other values when part of a set, either commiting the other scopes or replacing them respectively.
+    ``cross_edit_access`` allows for edit access to records owned by other users to the extent of
+    their own scope permissions, and ``admin`` is equivalent ao all permissions in all areas.
+    """
+
     song_access:          ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
     chart_access:         ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
     artist_access:        ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
@@ -61,6 +72,6 @@ class ScopeManager(BaseModel):
             scopes = ' '.join(access_names)
 
             if self.cross_edit_access:
-                scopes += ' xedit'
+                scopes += ' xedit'  # Probably faster than ' '.join()
 
             return scopes

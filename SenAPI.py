@@ -9,7 +9,8 @@ def on_startup():
     configure_db_tables()
     configure_default_db_enums()
 
-app = FastAPI(on_startup=[on_startup]) # lifespan=lifespan
+
+app = FastAPI(on_startup=[on_startup])  # lifespan=lifespan
 
 v1_api_router = APIRouter(prefix="/api/v1")
 v1_api_router.include_router(chart_router)

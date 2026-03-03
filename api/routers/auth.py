@@ -13,6 +13,7 @@ from sqlmodel import Session, select
 from starlette.responses import Response
 
 from api.utils.auth.hasher import verify_password, get_password_hash
+from api.utils.auth.scopes import ScopeManager, ScopeAccessLevel
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import private_key, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from db.session.session import SessionDep
@@ -21,7 +22,13 @@ from db.models.users import User
 auth_router = APIRouter(prefix='/auth')
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="token",
+    scopes={
+        'songs:read': 'read song data',
+        'songs:write': 'write song data'
+    }
+)
 
 
 class Token(BaseModel):
@@ -31,6 +38,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+
 
 class UserInDB(BaseModel):
     username: str
@@ -42,6 +50,7 @@ def get_mock_user(db, username: str):
         return UserInDB(**user_dict)
     return None
 
+
 def get_user_from_db(session: Session, username: str):
     try:
         db_user = session.exec(select(User).where(User.username == username)).one()
@@ -50,26 +59,15 @@ def get_user_from_db(session: Session, username: str):
         return None
 
 
-
 def authenticate_user_from_db(session: Session, username: str, password: str) -> User | None:
     try:
         db_user = session.exec(select(User).where(User.username == username)).one()
 
         if verify_password(password, db_user.hash):
             return db_user
-            # return UserInDB(username=db_user.username)
         return None
     except NoResultFound:
         return None
-
-
-# def authenticate_user(fake_db, username: str, password: str):
-#     user = get_mock_user(fake_db, username)
-#     if not user:
-#         return False
-#     if not verify_password(password, user.hash):
-#         return False
-#     return user
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep):
@@ -104,9 +102,13 @@ async def get_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    scopes = ScopeManager(song_access=ScopeAccessLevel.read, chart_access=ScopeAccessLevel.all,
+                          chart_creator_access={ScopeAccessLevel.read, ScopeAccessLevel.write, ScopeAccessLevel.all}, cross_edit_access=True)
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.username, "scope": str(scopes)}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -122,10 +124,10 @@ async def register(
             detail="Provide both username and password",
         )
 
-    hash = get_password_hash(form_data.password)
+    pw_hash = get_password_hash(form_data.password)
 
     try:
-        session.add(User(username=form_data.username, hash=hash))
+        session.add(User(username=form_data.username, hash=pw_hash))
         session.commit()
         # session.refresh(User(username=form_data.username, hash=hash))
     except IntegrityError:

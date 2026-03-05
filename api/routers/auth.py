@@ -104,6 +104,7 @@ async def get_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # TODO: Provide specific scopes for each access level
     scopes = ScopeManager(song_access=ScopeAccessLevel.read, chart_access=ScopeAccessLevel.all,
                           chart_creator_access={ScopeAccessLevel.read, ScopeAccessLevel.write, ScopeAccessLevel.all}, cross_edit_access=True)
 

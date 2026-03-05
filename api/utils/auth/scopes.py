@@ -1,7 +1,8 @@
+from abc import ABC
 from enum import StrEnum
+from typing import ClassVar
 
 from pydantic import BaseModel
-
 
 class ScopeAccessLevel(StrEnum):
     """
@@ -16,6 +17,17 @@ class ScopeAccessLevel(StrEnum):
 
     def scope_stringify(self, scope_name):
         return ':'.join((scope_name, self.value))
+
+
+# TODO: Alternative to method in ``ScopeManager``: https://stackoverflow.com/questions/70852331/how-to-define-class-attributes-after-inheriting-pydantics-basemodel#71664301
+#  Use this as a more concrete way of parsing expected Scopes, migrate multiple scope per field management to this class
+class DBRecordScopeField(BaseModel, ABC):
+    FieldName: ClassVar[str] = 'TODO'
+
+    access_level: ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
+
+    def __str__(self):
+        return f'{self.FieldName}:{self.access_level}'
 
 
 class ScopeManager(BaseModel):
@@ -37,6 +49,12 @@ class ScopeManager(BaseModel):
 
     cross_edit_access: bool = False
     admin: bool = False
+
+    # TODO: Return a field based on key string? Abstract keys into another class?
+    #  If the first solution, migrate ``access_keys`` in string constructor to use this function
+    #  Alternatively move
+    def field_from_key(self, key: str):
+        ...
 
     def __str__(self):
         if self.admin:

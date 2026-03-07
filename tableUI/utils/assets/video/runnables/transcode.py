@@ -4,7 +4,7 @@ from typing import Any
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject
 from ffmpeg import Progress
 
-from tableUI.utils.assets.video.transcode import create_ffmpeg_instance_for_background_video_transcode
+from utils.assets.video.transcode import create_ffmpeg_instance_for_background_video_transcode
 
 class BGVideoSignalSet(QObject):
     # Actual type is list[str]

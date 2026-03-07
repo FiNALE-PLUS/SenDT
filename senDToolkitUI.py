@@ -4,7 +4,7 @@ from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtWidgets import QApplication, QSplashScreen
 from sqlmodel import Session
 
-from tableUI.const import DATA_PATH, FFMPEG_PATH
+from const import DATA_PATH, FFMPEG_PATH
 from db.initialise import init_local_db
 from tableUI.gui import SenDTuiWindow
 from tableUI.utils.settings.get_settings import get_sendt_settings

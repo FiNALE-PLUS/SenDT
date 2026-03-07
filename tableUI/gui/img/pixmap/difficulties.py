@@ -3,7 +3,7 @@ from pathlib import Path
 
 from typing_extensions import NamedTuple
 
-from tableUI.const import BASE_DIR
+from const import BASE_DIR
 from utils.finale.difficulties import FinaleChartDifficulty
 
 class BaseDifficultyPixmaps(NamedTuple):

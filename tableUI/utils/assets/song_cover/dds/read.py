@@ -1,6 +1,6 @@
 from PIL import Image
 
-from tableUI.const import FULL_COVER_ART_NAME, MIRROR_COVER_ART_NAME, SMALL_COVER_ART_NAME
+from const import FULL_COVER_ART_NAME, MIRROR_COVER_ART_NAME, SMALL_COVER_ART_NAME
 from tableUI.utils.assets.song_cover.dds.convert import SongCoverImageSet
 from tableUI.paths import get_user_data_cover_art_dir_for
 

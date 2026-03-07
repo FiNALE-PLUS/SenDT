@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tableUI.const import USER_DATA_PATH
+from const import USER_DATA_PATH
 from db.models import Song, Chart
 
 

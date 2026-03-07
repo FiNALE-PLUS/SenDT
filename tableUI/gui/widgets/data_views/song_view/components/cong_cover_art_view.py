@@ -1,7 +1,7 @@
 from PIL import Image
 from PySide6.QtWidgets import QPushButton, QVBoxLayout, QLabel
 
-from tableUI.const import NO_COVER_IMG
+from const import NO_COVER_IMG
 from db.models import Song
 from tableUI.gui.dialogues.song_cover_art_preview import \
     SongCoverArtPreviewDialog

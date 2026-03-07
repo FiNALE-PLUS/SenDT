@@ -2,7 +2,7 @@ import shutil
 
 from pydantic import ValidationError
 
-from tableUI.const import SETTINGS_PATH
+from const import SETTINGS_PATH
 from tableUI.utils.settings.models.sendt_settings import SenDTSettings
 
 

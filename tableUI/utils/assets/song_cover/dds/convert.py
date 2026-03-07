@@ -4,7 +4,7 @@ from pathlib import Path
 from PIL import Image
 from PIL.Image import Resampling, Image as ImageObject
 
-from tableUI.const import BASE_DIR
+from const import BASE_DIR
 from tableUI.utils.assets.song_cover.dds.exceptions import SongCoverSourceImageError, SongCoverProcessingError
 
 SONG_COVER_FULL_SIZE = (256, 256)

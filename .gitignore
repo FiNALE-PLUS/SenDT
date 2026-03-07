@@ -4,8 +4,11 @@
 /tableUI/data/user_data/*
 /tableUI/data/backups/*
 /tableUI/data/settings.json
-/tableUI/bin/ffmpeg.exe
+/tableUI/bin
 /private
+/bin
+# Used to test modules when imports do not allow for __main__ clause within the module
+t.py
 
 # /tableUI/data/table_data.sqlite
 /tableUI/data/*.sqlite

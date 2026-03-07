@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QWidget, QMessageBox
 from sqlalchemy import Sequence
 from sqlmodel import Session, select
 
-from tableUI.const import BACKUP_PATH
+from const import BACKUP_PATH
 from db.models import Song, Chart
 from db.to_tables import get_all_tables
 from tableUI.gui.actions.backup.backup_game_data import backup_game_data

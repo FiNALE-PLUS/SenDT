@@ -7,6 +7,7 @@
 /tableUI/bin
 /private
 /bin
+/tmp
 # Used to test modules when imports do not allow for __main__ clause within the module
 t.py
 

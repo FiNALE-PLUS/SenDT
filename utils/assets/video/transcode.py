@@ -128,13 +128,13 @@ def transcode_finale_pv(input_path: Path, output_path: Path,
         ffmpeg = (
             FFmpeg(executable=str(FFMPEG_PATH.absolute())).
             option('y').
-            # option().
-            # option('fps', 30).
+            # Inputs must be this way round so that the filter applies to the video file, 
+            # and therefore attempts to remove the audio track from the video as opposed to the alpha mask
+            input('pipe:0').
             input(
                 str(input_path.absolute()),
             ).
             # Used to add the mask without writing to disk
-            input('pipe:0').
             output(
                 str(output_path.with_suffix('.wmv').absolute()),
                 {
@@ -148,13 +148,13 @@ def transcode_finale_pv(input_path: Path, output_path: Path,
                     'aspect': 1,
                     # Resize to 600x600 with black bars
                     'filter_complex': 
-                        r"[0:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
+                        r"[1:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
                         r"[cropped] split [main][to_mirror];"
                         r"[main] pad=600:600:(ow-iw)/2:(oh-ih)/2 [centre];"
                         r"[to_mirror] vflip [mirror];"
                         r"[centre][mirror] overlay=0:(main_h/2)+(overlay_h/2)+2[stack];"
                         r"[stack]crop=600:600:0:0[cropped_stack];"
-                        r"[1:v] alphaextract [alpha];"
+                        r"[0:v] alphaextract [alpha];"
                         r"[cropped_stack][alpha] alphamerge[stack_with_alpha];"
                         r"[stack_with_alpha] premultiply=inplace=yes",
                     # Remove audio tracks from output

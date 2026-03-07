@@ -27,3 +27,8 @@ class SdtChartBlob(SQLModel, table=True):
 
     blob_base_charts: list['Chart'] = Relationship(back_populates="base_chart_blob")
     blob_utage_charts: list['UtageEntry'] = Relationship(back_populates="utage_chart_blob")
+    
+    
+class VideoBlob(SQLModel, table=True):
+    id: int | None = Field(primary_key=True)
+    data: bytes = Field(nullable=False)

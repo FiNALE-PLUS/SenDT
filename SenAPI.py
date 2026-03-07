@@ -1,14 +1,20 @@
 import asyncio
+from os import getenv
 
 from fastapi import FastAPI, APIRouter
+from sqlalchemy import NullPool
+from sqlmodel import SQLModel
 
 from api.routers import auth_router, chart_router, blob_router
-from db.session.models import configure_db_tables
+from db.initialise.initialise import init_postgres_db
 from db.session.records import configure_default_db_enums
 
+import db.models
 
 async def on_startup():
-    configure_db_tables()
+    sync_engine = init_postgres_db(getenv("DB_USER"), getenv("DB_PASSWORD"), getenv("DB_SCHEMA"), getenv("DB_HOST"))
+    SQLModel.metadata.create_all(bind=sync_engine)
+    # sync_engine.pool = NullPool()
     await configure_default_db_enums()
 
 

@@ -4,8 +4,6 @@ from sqlalchemy import create_engine, Engine, text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlmodel import SQLModel
 
-import db.models
-
 
 def init_local_db(path: Path) -> Engine:
     # sqlite_file_name = "database.db"

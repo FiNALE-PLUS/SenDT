@@ -9,6 +9,7 @@ from api.routers import auth_router, chart_router, blob_router
 from db.initialise.initialise import init_postgres_db
 from db.session.records import configure_default_db_enums
 
+# Required to create schema
 import db.models
 
 async def on_startup():

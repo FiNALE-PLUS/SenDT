@@ -11,6 +11,10 @@ from const import FFMPEG_PATH, FFPROBE_PATH
 from .mask import generate_finale_pv_mask
 
 
+class NotAVideo(ValueError):
+    ...
+
+
 # TODO: add configuration and worker for UI
 @deprecated('Phase out serverless GUI usage')
 def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, output_path: Path,
@@ -55,12 +59,12 @@ def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, outp
 
     return ffmpeg
 
-async def transcode_finale_pv(input_path: Path, output_path: Path,
+def transcode_finale_pv(input_path: Path, output_path: Path,
                                                           quality: int = 1) -> FFmpeg:
     """
-    Returns a ``FFmpeg`` instance preconfigured to transcode an input video
-    to one suitable for Maimai FiNALE when ``execute`` is called.
-    Videos that do not have an aspect ratio of 1:1 will have black bars added to fit within the play area without distortion.
+    Asyncronously transcodes a video at ``input_path`` into one suitable for use within Maimai FiNALE
+    Videos that do not have an aspect ratio of 1:1 will have black bars added to fit within the play area without distortion, 
+    and landscape videos will have a mirror effect added similarly to those found in the vanilla game.
 
     :param input_path: The path of the input video to transcode.
     :param output_path: The path of the output video to write to. Note that the file extension will be ``wmv``.
@@ -69,7 +73,7 @@ async def transcode_finale_pv(input_path: Path, output_path: Path,
     """
     
     ffprobe = (
-        AsyncFFmpeg(executable=FFPROBE_PATH.absolute()).
+        FFmpeg(executable=FFPROBE_PATH.absolute()).
         input(
             str(input_path.absolute()),
             ).
@@ -77,13 +81,16 @@ async def transcode_finale_pv(input_path: Path, output_path: Path,
         option('show_streams', None)
         )
     
-    media = json.loads(await ffprobe.execute())
+    media = json.loads(ffprobe.execute())
+    
+    if (main_stream_type := media['streams'][0]['codec_type']) != 'video':
+        raise NotAVideo(f'{main_stream_type}')
     
     input_width, input_height = media['streams'][0]['width'], media['streams'][0]['height']
     
     if input_width <= input_height:
         ffmpeg = (
-            AsyncFFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            FFmpeg(executable=str(FFMPEG_PATH.absolute())).
             option('y').
             # option().
             # option('fps', 30).
@@ -110,7 +117,7 @@ async def transcode_finale_pv(input_path: Path, output_path: Path,
                 },
                 # kwargs=('an',)
         ))
-        await ffmpeg.execute()
+        ffmpeg.execute()
         
     else:
         mask = generate_finale_pv_mask(input_width, input_height)
@@ -119,7 +126,7 @@ async def transcode_finale_pv(input_path: Path, output_path: Path,
         mask.save(mask_io, format='PNG')
     
         ffmpeg = (
-            AsyncFFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            FFmpeg(executable=str(FFMPEG_PATH.absolute())).
             option('y').
             # option().
             # option('fps', 30).
@@ -156,4 +163,4 @@ async def transcode_finale_pv(input_path: Path, output_path: Path,
                 # kwargs=('an',)
             )
         )
-        await ffmpeg.execute(mask_io.getvalue())
+        ffmpeg.execute(mask_io.getvalue())

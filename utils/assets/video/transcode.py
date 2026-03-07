@@ -55,7 +55,7 @@ def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, outp
 
     return ffmpeg
 
-async def transcode_bg_with_reflection(input_path: Path, output_path: Path,
+async def transcode_finale_pv(input_path: Path, output_path: Path,
                                                           quality: int = 1) -> FFmpeg:
     """
     Returns a ``FFmpeg`` instance preconfigured to transcode an input video
@@ -81,49 +81,79 @@ async def transcode_bg_with_reflection(input_path: Path, output_path: Path,
     
     input_width, input_height = media['streams'][0]['width'], media['streams'][0]['height']
     
-    # TODO: Replace with dynamic resolution based on input
-    mask = generate_finale_pv_mask(input_width, input_height)
+    if input_width <= input_height:
+        ffmpeg = (
+            AsyncFFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            option('y').
+            # option().
+            # option('fps', 30).
+            input(
+                str(input_path.absolute()),
+            ).
+            output(
+                str(output_path.with_suffix('.wmv').absolute()),
+                {
+                    'vcodec': 'wmv2',
+                    # 'b:v': bitrate,
+                    # 'b:v': bitrate,
+                    'q:v': quality,
+                    # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
+                    # 'r': 30,
+                    # 1:1 aspect ratio
+                    'aspect': 1,
+                    # Resize to 600x600 with black bars
+                    'vf': 
+                        r"[0:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
+                        r"[cropped] pad=600:600:(ow-iw)/2:(oh-ih)/2",
+                    # Remove audio tracks from output
+                    'an': None
+                },
+                # kwargs=('an',)
+        ))
+        await ffmpeg.execute()
+        
+    else:
+        mask = generate_finale_pv_mask(input_width, input_height)
     
-    mask_io = BytesIO()
-    mask.save(mask_io, format='PNG')
+        mask_io = BytesIO()
+        mask.save(mask_io, format='PNG')
     
-    ffmpeg = (
-        AsyncFFmpeg(executable=str(FFMPEG_PATH.absolute())).
-        option('y').
-        # option().
-        # option('fps', 30).
-        input(
-            str(input_path.absolute()),
-        ).
-        # Used to add the mask without writing to disk
-        input('pipe:0').
-        output(
-            str(output_path.with_suffix('.wmv').absolute()),
-            {
-                'vcodec': 'wmv2',
-                # 'b:v': bitrate,
-                # 'b:v': bitrate,
-                'q:v': quality,
-                # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
-                # 'r': 30,
-                # 1:1 aspect ratio
-                'aspect': 1,
-                # Resize to 600x600 with black bars
-                'filter_complex': 
-                    r"[0:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
-                    r"[cropped] split [main][to_mirror];"
-                    r"[main] pad=600:600:(ow-iw)/2:(oh-ih)/2 [centre];"
-                    r"[to_mirror] vflip [mirror];"
-                    r"[centre][mirror] overlay=0:(main_h/2)+(overlay_h/2)+2[stack];"
-                    r"[stack]crop=600:600:0:0[cropped_stack];"
-                    r"[1:v] alphaextract [alpha];"
-                    r"[cropped_stack][alpha] alphamerge[stack_with_alpha];"
-                    r"[stack_with_alpha] premultiply=inplace=yes",
-                # Remove audio tracks from output
-                'an': None
-            },
-            # kwargs=('an',)
+        ffmpeg = (
+            AsyncFFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            option('y').
+            # option().
+            # option('fps', 30).
+            input(
+                str(input_path.absolute()),
+            ).
+            # Used to add the mask without writing to disk
+            input('pipe:0').
+            output(
+                str(output_path.with_suffix('.wmv').absolute()),
+                {
+                    'vcodec': 'wmv2',
+                    # 'b:v': bitrate,
+                    # 'b:v': bitrate,
+                    'q:v': quality,
+                    # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
+                    # 'r': 30,
+                    # 1:1 aspect ratio
+                    'aspect': 1,
+                    # Resize to 600x600 with black bars
+                    'filter_complex': 
+                        r"[0:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
+                        r"[cropped] split [main][to_mirror];"
+                        r"[main] pad=600:600:(ow-iw)/2:(oh-ih)/2 [centre];"
+                        r"[to_mirror] vflip [mirror];"
+                        r"[centre][mirror] overlay=0:(main_h/2)+(overlay_h/2)+2[stack];"
+                        r"[stack]crop=600:600:0:0[cropped_stack];"
+                        r"[1:v] alphaextract [alpha];"
+                        r"[cropped_stack][alpha] alphamerge[stack_with_alpha];"
+                        r"[stack_with_alpha] premultiply=inplace=yes",
+                    # Remove audio tracks from output
+                    'an': None
+                },
+                # kwargs=('an',)
+            )
         )
-    )
-
-    await ffmpeg.execute(mask_io.getvalue())
+        await ffmpeg.execute(mask_io.getvalue())

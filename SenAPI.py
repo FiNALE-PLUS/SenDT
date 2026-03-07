@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, APIRouter
 
 from api.routers import auth_router, chart_router, blob_router
@@ -5,9 +7,9 @@ from db.session.models import configure_db_tables
 from db.session.records import configure_default_db_enums
 
 
-def on_startup():
+async def on_startup():
     configure_db_tables()
-    configure_default_db_enums()
+    await configure_default_db_enums()
 
 
 app = FastAPI(on_startup=[on_startup])  # lifespan=lifespan

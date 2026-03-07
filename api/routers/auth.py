@@ -9,14 +9,15 @@ from jwt.exceptions import InvalidTokenError
 
 from pydantic import BaseModel
 from sqlalchemy.exc import NoResultFound, IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.responses import Response
 
 from api.utils.auth.hasher import verify_password, get_password_hash
 from api.utils.auth.scopes import ScopeManager, ScopeAccessLevel
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import private_key, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-from db.session.session import SessionDep
+from db.session.session import AsyncSessionDep
 from db.models.users import User
 
 auth_router = APIRouter(prefix='/auth')
@@ -52,17 +53,17 @@ def get_mock_user(db, username: str):
     return None
 
 
-def get_user_from_db(session: Session, username: str):
+async def get_user_from_db(session: AsyncSession, username: str):
     try:
-        db_user = session.exec(select(User).where(User.username == username)).one()
+        db_user = await session.exec(select(User).where(User.username == username)).one()
         return UserInDB(**db_user)
     except NoResultFound:
         return None
 
 
-def authenticate_user_from_db(session: Session, username: str, password: str) -> User | None:
+async def authenticate_user_from_db(session: AsyncSession, username: str, password: str) -> User | None:
     try:
-        db_user = session.exec(select(User).where(User.username == username)).one()
+        db_user = (await session.exec(select(User).where(User.username == username))).one()
 
         if verify_password(password, db_user.hash):
             return db_user
@@ -71,7 +72,7 @@ def authenticate_user_from_db(session: Session, username: str, password: str) ->
         return None
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: SessionDep):
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: AsyncSessionDep):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -85,7 +86,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
         token_data = TokenData(username=username)
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user_from_db(session, username=token_data.username)
+    user = await get_user_from_db(session, username=token_data.username)
     if user is None:
         raise credentials_exception
     return user
@@ -94,9 +95,9 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
 @auth_router.post("/token")
 async def get_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: SessionDep
+    session: AsyncSessionDep
 ) -> Token:
-    user = authenticate_user_from_db(session, form_data.username, form_data.password)
+    user = await authenticate_user_from_db(session, form_data.username, form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -118,7 +119,7 @@ async def get_access_token(
 @auth_router.post("/register")
 async def register(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: SessionDep
+    session: AsyncSessionDep
 ):
     if not form_data.username or not form_data.password:
         raise HTTPException(
@@ -130,7 +131,7 @@ async def register(
 
     try:
         session.add(User(username=form_data.username, hash=pw_hash))
-        session.commit()
+        await session.commit()
         # session.refresh(User(username=form_data.username, hash=hash))
     except IntegrityError:
         raise HTTPException(

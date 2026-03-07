@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from sqlalchemy import create_engine, Engine, text
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlmodel import SQLModel
 
 import db.models
@@ -26,6 +27,18 @@ def init_postgres_db(username: str, pw: str, schema: str, host: str = 'localhost
     # print(url)
 
     engine = create_engine(url)
+
+    # SQLModel.metadata.create_all(engine)
+
+    return engine
+
+
+def init_async_postgres_db(username: str, pw: str, schema: str, host: str = 'localhost:5432') -> AsyncEngine:
+    url = f'postgresql+asyncpg://{username}:{pw}@{host}/{schema}'
+
+    # print(url)
+
+    engine = create_async_engine(url)
 
     # SQLModel.metadata.create_all(engine)
 

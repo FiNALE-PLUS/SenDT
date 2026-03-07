@@ -12,6 +12,7 @@ BINARY_DIR = BASE_DIR / 'bin'
 FFMPEG_PATH = BINARY_DIR / 'ffmpeg.exe'
 FFPROBE_PATH = BINARY_DIR / 'ffprobe.exe'
 
+TEMP_DATA_PATH = BASE_DIR / 'tmp'
 DATA_PATH = UI_DIR / 'data'
 SETTINGS_PATH = UI_DIR / 'settings.json'
 

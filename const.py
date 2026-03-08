@@ -2,6 +2,8 @@ from pathlib import Path
 
 from PIL import Image
 
+from sys import platform
+
 BASE_DIR = Path(__file__).resolve().parent
 
 # TODO: Remove UI dirs when server is complete
@@ -9,8 +11,23 @@ UI_DIR = BASE_DIR / 'tableUI'
 
 # TODO: replace single const with function to check for possible different exceptions
 BINARY_DIR = BASE_DIR / 'bin'
-FFMPEG_PATH = BINARY_DIR / 'ffmpeg.exe'
-FFPROBE_PATH = BINARY_DIR / 'ffprobe.exe'
+
+
+if platform == 'win32':
+    FFMPEG_NAME = 'ffmpeg.exe'
+    FFPROBE_NAME = 'ffmpeg.exe'
+# Intended for linux
+else:
+    FFMPEG_NAME = 'ffmpeg'
+    FFPROBE_NAME = 'ffmpeg'
+
+FFMPEG_PATH = BINARY_DIR / FFMPEG_NAME
+FFPROBE_PATH = BINARY_DIR / FFPROBE_NAME
+
+if not all((FFMPEG_PATH.is_file(), FFPROBE_PATH.is_file())):
+    raise FileNotFoundError(
+        f'Either FFmpeg or FFprobe have not been found. An FFmpeg executable is expected to be at {FFMPEG_PATH.absolute()}, and FFprobe at {FFPROBE_PATH.absolute()}'
+    )
 
 TEMP_DATA_PATH = BASE_DIR / 'tmp'
 DATA_PATH = UI_DIR / 'data'

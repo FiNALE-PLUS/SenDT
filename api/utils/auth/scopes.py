@@ -69,9 +69,10 @@ class DBRecordScopeField(BaseModel, ABC):
         
         return None
         
-    def try_from_token_scope_string(self, token_scope_string: str) -> None:
+    def from_token_scope_string(self, token_scope_string: str) -> None:
         """
-        A shorthand to simplify searching for a scope within a set of scopes provided by a JWT.
+        A shorthand to simplify searching for a scope within a set of scopes provided by a JWT. 
+        Matches the scopes found, including if none are found (in which case all scopes are set to ``False``).
 
         Args:
             token_scope_string (str): The set of scopes to search within.
@@ -84,9 +85,13 @@ class DBRecordScopeField(BaseModel, ABC):
         
         for scope in scopes:
             try:
-                return self.try_from_string(scope)
+                self.try_from_string(scope)
+                return
             except Exception:
                 pass
+        self.read_access = False
+        self.write_access = False
+        self.delete_access = False
         
         # raise ValueError('scope not found')
     
@@ -135,8 +140,11 @@ class ScopeManager(BaseModel):
     cross_edit_access:    bool                   = False
     admin:                bool                   = False
     
-    def update_from_token_string(self, token_scopes: str):
-        
+    def match_token_string_scopes(self, token_scopes: str):
+        # Reset permissions to then grant as found
+        self.admin = False
+        self.cross_edit_access = False
+          
         # While the split isn't necessary as of writing, doing so now will prevent an accidental collision 
         # causing unwarranted permissions being given to users.
         seperate_scopes = token_scopes.split(' ')

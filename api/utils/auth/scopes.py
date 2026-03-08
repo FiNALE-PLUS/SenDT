@@ -41,6 +41,20 @@ class DBRecordScopeField(BaseModel, ABC):
     
     @classmethod
     def try_from_string(cls, scope_string: str):
+        """
+        Attempts to look for a valid string representation of this scope, and returns it if available.
+        
+        Args:
+            scope_string (str): The stringified scope to search.
+
+        Raises:
+            ValueError: _description_
+            ValueError: _description_
+            ValueError: _description_
+
+        Returns:
+            _type_: The deserialised scopes represented by `scope_string`
+        """
         split = scope_string.split(':')
         
         scope_type = split[0]
@@ -58,6 +72,31 @@ class DBRecordScopeField(BaseModel, ABC):
             write_access='w' in scopes,
             delete_access='d' in scopes
         )
+        
+    @classmethod
+    def try_from_token_scope_string(cls, token_scope_string: str):
+        """
+        A shorthand to simplify searching for a scope within a set of scopes provided by a JWT.
+
+        Args:
+            token_scope_string (str): The set of scopes to search within.
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            _type_: _description_
+        """
+        
+        scopes = token_scope_string.split(' ')
+        
+        for scope in scopes:
+            try:
+                return cls.try_from_string(scope)
+            except Exception:
+                pass
+        
+        raise ValueError('scope not found')
     
 class SongScopeField(DBRecordScopeField):
     FieldName: ClassVar[str] = 'song'
@@ -83,7 +122,7 @@ class AudioScopeField(DBRecordScopeField):
 class VideoScopeField(DBRecordScopeField):
     FieldName: ClassVar[str] = 'video'
 
-
+# TODO: Use new scope fields
 class ScopeManager(BaseModel):
     """
     Manages the OAuth scopes of an authenticated user. Scope levels ``none`` and ``all``

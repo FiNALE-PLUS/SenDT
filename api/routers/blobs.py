@@ -7,7 +7,7 @@ from uuid import uuid4
 from anyio import NamedTemporaryFile, open_file
 
 from fastapi import APIRouter, HTTPException, UploadFile, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlmodel import select
 from sqlalchemy.exc import NoResultFound
 
@@ -21,7 +21,7 @@ blob_router = APIRouter(prefix='/blob')
 
 
 @blob_router.post('/video')
-async def upload_file(file: UploadFile, session: AsyncSessionDep):
+async def upload_pv(file: UploadFile, session: AsyncSessionDep):
 
     try:
         content = file.file.read()
@@ -69,9 +69,15 @@ async def download_video(id: int, session: AsyncSessionDep):
     try:
         video = (await session.exec(select(VideoBlob).where(VideoBlob.id == id))).one()
         
-        print(len(video.data))
+        # print(len(video.data))
+        
+        # async with NamedTemporaryFile(delete=False) as f:
+        #     # with ExitStack() as stack:
+        #     #     stack.callback(os.remove(video.name))
+        #     await f.write(video.data)
         
         return StreamingResponse(BytesIO(video.data), media_type='video/x-ms-wmv')
+        # return FileResponse(f.name, media_type='video/x-ms-wmv', filename=f'video_{video.id}.wmv')
     except NoResultFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='no video with this id exists')
     

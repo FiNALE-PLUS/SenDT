@@ -24,10 +24,64 @@ class ScopeAccessLevel(StrEnum):
 class DBRecordScopeField(BaseModel, ABC):
     FieldName: ClassVar[str] = 'TODO'
 
-    access_level: ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
+    # access_level: ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
+    read_access:   bool
+    write_access:  bool
+    delete_access: bool
 
-    def __str__(self):
-        return f'{self.FieldName}:{self.access_level}'
+    def get_scope_value(self) -> str | None:
+        if not any((self.read_access, self.write_access, self.delete_access)):
+            return None
+        else:
+            access_levels_string = \
+            f'{'r' if self.read_access else ''}'
+            f'{'w' if self.write_access else ''}'
+            f'{'d' if self.delete_access else ''}'
+            return f'{self.FieldName}:{access_levels_string}'
+    
+    @classmethod
+    def try_from_string(cls, scope_string: str):
+        split = scope_string.split(':')
+        
+        scope_type = split[0]
+        scopes = split[1]
+        
+        if len(split) != 2:
+            raise ValueError('not a valid scope string')
+        if scope_type != cls.FieldName:
+            raise ValueError('scope string not for this scope')
+        if len(scopes) > 3 or len(scopes) < 1:
+            raise ValueError('no scopes provided in string')
+        
+        return cls(
+            read_access='r' in scopes,
+            write_access='w' in scopes,
+            delete_access='d' in scopes
+        )
+    
+class SongScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'song'
+    
+class ChartScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'chart'
+    
+class ArtistScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'artist'
+    
+class ChartCreatorScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'chart_creator'
+    
+class GenreScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'genre'
+    
+class SdtBlobScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'sdt'
+    
+class AudioScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'audio'
+    
+class VideoScopeField(DBRecordScopeField):
+    FieldName: ClassVar[str] = 'video'
 
 
 class ScopeManager(BaseModel):

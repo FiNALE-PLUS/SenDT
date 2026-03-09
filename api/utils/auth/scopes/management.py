@@ -1,9 +1,11 @@
 from abc import ABC
 from enum import StrEnum
 from typing import ClassVar
+from warnings import deprecated
 
 from pydantic import BaseModel
 
+@deprecated('Use ``DBRecordScopeField`` subclass')
 class ScopeAccessLevel(StrEnum):
     """
     Enumerates the available access possibilities for a particular scope.
@@ -63,6 +65,7 @@ class DBRecordScopeField(BaseModel, ABC):
         if len(scopes) > 3 or len(scopes) < 1:
             raise ValueError('no scopes provided in string')
         
+        # TODO: May need to instead be serialised and deserialised into separate space-separated scopes for individual scopes
         self.read_access = 'r' in scopes
         self.write_access = 'w' in scopes
         self.delete_access = 'd' in scopes

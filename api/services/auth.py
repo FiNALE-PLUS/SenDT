@@ -1,4 +1,8 @@
-from api.utils.auth.scopes import ScopeAccessLevel, ScopeManager
+from api.utils.auth.scopes.management import (
+    ScopeManager, 
+    SongScopeField, ChartScopeField, ArtistScopeField, ChartCreatorScopeField, 
+    GenreScopeField, SdtBlobScopeField, AudioScopeField, VideoScopeField
+    )
 
 
 class UnknownRole(ValueError):
@@ -28,14 +32,14 @@ def get_scopes_for_role(role: str) -> ScopeManager:
             return ScopeManager()
         case 'viewer':
             return ScopeManager(
-                song_access=ScopeAccessLevel.read,
-                chart_access= ScopeAccessLevel.read,
-                artist_access=ScopeAccessLevel.read,
-                chart_creator_access=ScopeAccessLevel.read,
-                genre_access=ScopeAccessLevel.read,
-                sdt_blob_access=ScopeAccessLevel.read,
-                audio_blob_access=ScopeAccessLevel.read,
-                video_blob_access=ScopeAccessLevel.read
+                song_access=SongScopeField(read_access=True),
+                chart_access=ChartScopeField(read_access=True),
+                artist_access=ArtistScopeField(read_access=True),
+                chart_creator_access=ChartCreatorScopeField(read_access=True),
+                genre_access=GenreScopeField(read_access=True),
+                sdt_blob_access=SdtBlobScopeField(read_access=True),
+                audio_blob_access=AudioScopeField(read_access=True),
+                video_blob_access=VideoScopeField(read_access=True)
             )
         case 'dev':
             return ScopeManager(

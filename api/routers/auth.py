@@ -14,23 +14,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.responses import Response
 
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes import ScopeManager, ScopeAccessLevel
+from api.utils.auth.scopes.management import ScopeManager, ScopeAccessLevel
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import private_key, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from db.session.session import AsyncSessionDep
 from db.models.users import User
 
 auth_router = APIRouter(prefix='/auth')
-
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="token",
-    # TODO
-    scopes={
-        'songs:read': 'read song data',
-        'songs:write': 'write song data'
-    }
-)
 
 
 class Token(BaseModel):

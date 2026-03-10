@@ -76,7 +76,7 @@ class AbstractQuotedString(str, ABC):
         if (not initial_value.startswith(cls._value_prefix)
                 and not initial_value.endswith(cls._value_suffix)
                 and str(cls._quote_str) not in initial_value):
-            return cls._value_prefix + initial_value + cls._value_suffix
+            return cls._value_prefix() + initial_value + cls._value_suffix()
 
         if str(cls._quote_str) in initial_value:
             raise ValueError(

@@ -1,86 +1,22 @@
 from datetime import timedelta
 from typing import Annotated
 
-import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, SecurityScopes
-
-from jwt.exceptions import InvalidTokenError
-
-from pydantic import BaseModel
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.responses import Response
 
-from api.middleware.scopes import oauth2_scheme
+from api.dependencies.authentication import Token, authenticate_user_from_db, get_current_user
+from api.dependencies.scopes import get_scopes_for_role
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.management import DBReadSubScope, ScopeManager, ScopeAccessLevel, SongScopeField
+from api.utils.auth.scopes.management import DBReadSubScope, ScopeManager, SongScopeField
 from api.utils.auth.token import create_access_token
-from api.utils.auth.token_const import private_key, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
 from db.session.session import AsyncSessionDep
-from db.models.users import User
+from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth')
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: str | None = None
-
-
-class UserInDB(BaseModel):
-    username: str
-
-
-def get_mock_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-    return None
-
-
-async def get_user_from_db(session: AsyncSession, username: str):
-    try:
-        db_user = await session.exec(select(User).where(User.username == username)).one()
-        return UserInDB(**db_user)
-    except NoResultFound:
-        return None
-
-
-async def authenticate_user_from_db(session: AsyncSession, username: str, password: str) -> User | None:
-    try:
-        db_user = (await session.exec(select(User).where(User.username == username))).one()
-
-        if verify_password(password, db_user.hash):
-            return db_user
-        return None
-    except NoResultFound:
-        return None
-
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: AsyncSessionDep):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, private_key, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except InvalidTokenError:
-        raise credentials_exception
-    user = await get_user_from_db(session, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
 
 
 @auth_router.post("/token")
@@ -89,19 +25,19 @@ async def get_access_token(
     session: AsyncSessionDep
 ) -> Token:
     user = await authenticate_user_from_db(session, form_data.username, form_data.password)
-    if not user:
+    if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    # TODO: Provide specific scopes for each access level
-    scopes = ScopeManager(song_access=SongScopeField(read_access=DBReadSubScope(granted=True)), cross_edit_access=True)
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        
+    role_name = (await session.exec(select(UserAccess).where(UserAccess.id == user.access_level_id))).one()
+    
+    scopes = get_scopes_for_role(role_name.name)
+    
     access_token = create_access_token(
-        data={"sub": user.username, "scope": str(scopes)}, expires_delta=access_token_expires
+        data={"sub": user.username, "scope": str(scopes)}, expires_delta=TOKEN_EXPIRY_TIMEDELTA
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -133,5 +69,10 @@ async def register(
 
 # TODO
 @auth_router.get("/test")
-async def test(security_scopes: SecurityScopes):
-    return security_scopes
+async def test(current_user: 
+    Annotated[User, 
+              Security(
+                  get_current_user, 
+                  scopes=SongScopeField(read_access=DBReadSubScope(granted=True)).get_scope_values()
+                  )]):
+    return current_user

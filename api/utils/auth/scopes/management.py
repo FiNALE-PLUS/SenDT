@@ -168,13 +168,14 @@ class VideoScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'v'
     DocsName: ClassVar[str] = 'video'
 
-# TODO: Use new scope fields
 class ScopeManager(BaseModel):
     """
-    Manages the OAuth scopes of an authenticated user. Scope levels ``none`` and ``all``
-    override all other values when part of a set, either commiting the other scopes or replacing them respectively.
-    ``cross_edit_access`` allows for edit access to records owned by other users to the extent of
-    their own scope permissions, and ``admin`` is equivalent ao all permissions in all areas.
+    Manages the OAuth scopes of an authenticated user. Each field related to direct DB access manages its own sub-scopes, 
+    which in turn authenticates a user's ability to interact with each type of content in a different way (read, write and delete at time of writing).
+    This system intends to trade of immediate speed of directly adding a list of strings for scopes to validate in return for elimination of authentication bugs 
+    related to accidentally mistyping a scope, and additionally easing the transition into adding new scopes when necessary.
+    
+    ``cross_edit_access`` is a special scope allowing for users to edit content submitted by another user (where as the API should otherwise enforce ownership for writes to a record).
     """
 
     song_access:          SongScopeField         = SongScopeField()
@@ -187,11 +188,9 @@ class ScopeManager(BaseModel):
     video_blob_access:    VideoScopeField        = VideoScopeField()
 
     cross_edit_access:    bool                   = False
-    admin:                bool                   = False
     
     def match_token_string_scopes(self, token_scopes: str):
         # Reset permissions to then grant as found
-        self.admin = False
         self.cross_edit_access = False
           
         # While the split isn't necessary as of writing, doing so now will prevent an accidental collision 
@@ -209,9 +208,9 @@ class ScopeManager(BaseModel):
             
 
     def __str__(self):
-        if self.admin:
-            return 'admin'
-        
+        """
+        Generates a string as expected by the ``scope`` field of a JWT.
+        """        
         access_fields = []
         
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):

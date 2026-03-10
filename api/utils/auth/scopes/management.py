@@ -1,9 +1,12 @@
 from abc import ABC
 from enum import StrEnum
+import re
 from typing import ClassVar
 from warnings import deprecated
 
 from pydantic import BaseModel
+
+whitespace_pattern = re.compile(r'\s')
 
 @deprecated('Use ``DBRecordScopeField`` subclass')
 class ScopeAccessLevel(StrEnum):
@@ -19,26 +22,64 @@ class ScopeAccessLevel(StrEnum):
 
     def scope_stringify(self, scope_name):
         return ':'.join((scope_name, self.value))
+    
+    
+class DBRecordSubScope(BaseModel, ABC):
+    SubScopeName: ClassVar[str] = 'TODO'
+    description: ClassVar[str] = 'TODO'
+    
+    granted: bool = False
+    
+    def __bool__(self):
+        return self.granted
+    
+    @classmethod
+    def get_subscope_string_with_scope(cls, scope: str):
+        if whitespace_pattern.match(scope):
+            raise ValueError('Scope must not contain whitespace')
+        return f'{scope}:{cls.SubScopeName}'
 
+class DBReadSubScope(DBRecordSubScope):
+    SubScopeName: ClassVar[str] = 'r'
+    description: ClassVar[str] = 'Manages read access'
+    
+class DBWriteSubScope(DBRecordSubScope):
+    SubScopeName: ClassVar[str] = 'w'
+    description: ClassVar[str] = 'Manages insertion and update access'
+    
+class DBDeleteSubScope(DBRecordSubScope):
+    SubScopeName: ClassVar[str] = 'd'
+    description: ClassVar[str] = 'Manages deletion access'
+
+# class DBCrossAccessScope(DBRecordSubScope):
+#     VariantName: ClassVar[str] = 'x'
 
 class DBRecordScopeField(BaseModel, ABC):
     """
     Encapsulates applicable database-related scopes for a single type of content.
     Used by the API to determine whether a user can read, write or delete certain content.
     """
-    FieldName: ClassVar[str] = 'TODO'
+    ScopeName: ClassVar[str] = 'TODO'
+    DocsName: ClassVar[str] = 'TODO'
 
     # access_level: ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
-    read_access:   bool = False
-    write_access:  bool = False
-    delete_access: bool = False
-
-    def get_scope_value(self) -> str | None:
-        if not any((self.read_access, self.write_access, self.delete_access)):
-            return None
-        else:
-            access_levels_string = f'{'r' if self.read_access else ''}{'w' if self.write_access else ''}{'d' if self.delete_access else ''}'
-            return f'{self.FieldName}:{access_levels_string}'
+    read_access:   DBReadSubScope   = DBReadSubScope()
+    write_access:  DBWriteSubScope  = DBWriteSubScope()
+    delete_access: DBDeleteSubScope = DBDeleteSubScope()
+        
+    @classmethod
+    def get_string_for_subscope(cls, subscope: DBRecordSubScope):
+        return f'{cls.ScopeName}:{subscope.__class__.SubScopeName}'
+        
+    def get_scope_values(self) -> list[str]:
+        scope_values = []
+        
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
+            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+            if subscope.granted:
+                scope_values.append(self.get_string_for_subscope(subscope))
+        
+        return scope_values
     
     def try_from_string(self, scope_string: str) -> None:
         """
@@ -53,22 +94,15 @@ class DBRecordScopeField(BaseModel, ABC):
         Returns:
             _type_: The deserialised scopes represented by `scope_string`.
         """
-        split = scope_string.split(':')
+        if whitespace_pattern.match(scope_string):
+            raise ValueError('This function is intended to search a single scope. Please use `from_token_scope_string` if you want to pass a whole token to parse.')
         
-        scope_type = split[0]
-        scopes = split[1]
         
-        if len(split) != 2:
-            raise ValueError('not a valid scope string')
-        if scope_type != self.FieldName:
-            raise ValueError('scope string not for this scope')
-        if len(scopes) > 3 or len(scopes) < 1:
-            raise ValueError('no scopes provided in string')
-        
-        # TODO: May need to instead be serialised and deserialised into separate space-separated scopes for individual scopes
-        self.read_access = 'r' in scopes
-        self.write_access = 'w' in scopes
-        self.delete_access = 'd' in scopes
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
+            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+            if subscope.get_subscope_string_with_scope(self.ScopeName) == scope_string:
+                subscope.granted = True
+                return
         
         return None
         
@@ -83,44 +117,56 @@ class DBRecordScopeField(BaseModel, ABC):
         Returns:
             _type_: The deserialised scopes of the group represented by `token_scope_string`.
         """
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
+            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+            subscope.granted = False
         
         scopes = token_scope_string.split(' ')
         
         for scope in scopes:
-            try:
-                self.try_from_string(scope)
-                return
-            except Exception:
-                pass
-        self.read_access = False
-        self.write_access = False
-        self.delete_access = False
+            self.try_from_string(scope)
         
-        # raise ValueError('scope not found')
+    def openapi_scope_descriptions(self) -> dict[str, str]:
+        scope_descriptions = {}
+        
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
+            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+            scope_descriptions[subscope.get_subscope_string_with_scope(self.ScopeName)] = f'{subscope.description} for {self.DocsName}(s)'
+            
+        
+        return scope_descriptions
     
 class SongScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'song'
+    ScopeName: ClassVar[str] = 's'
+    DocsName: ClassVar[str] = 'song'
     
 class ChartScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'chart'
+    ScopeName: ClassVar[str] = 'c'
+    DocsName: ClassVar[str] = 'chart'
     
 class ArtistScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'artist'
+    ScopeName: ClassVar[str] = 'a'
+    DocsName: ClassVar[str] = 'artist'
     
 class ChartCreatorScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'creator'
+    ScopeName: ClassVar[str] = 'cc'
+    DocsName: ClassVar[str] = 'creator'
     
 class GenreScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'genre'
+    ScopeName: ClassVar[str] = 'g'
+    DocsName: ClassVar[str] = 'genre'
     
 class SdtBlobScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'sdt'
+    ScopeName: ClassVar[str] = 'sdt'
+    DocsName: ClassVar[str] = 'sdt'
     
 class AudioScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'audio'
+    ScopeName: ClassVar[str] = 'aud'
+    DocsName: ClassVar[str] = 'audio'
     
 class VideoScopeField(DBRecordScopeField):
-    FieldName: ClassVar[str] = 'video'
+    ScopeName: ClassVar[str] = 'v'
+    DocsName: ClassVar[str] = 'video'
 
 # TODO: Use new scope fields
 class ScopeManager(BaseModel):
@@ -158,7 +204,8 @@ class ScopeManager(BaseModel):
         
         # Dynamically get all ``DBRecordScopeField``s, ensuring inclusion of any future fields as they are added
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):
-            self.__getattribute__(field_name).try_from_token_scope_string(token_scopes)
+            scope_field: DBRecordScopeField = self.__getattribute__(field_name)
+            scope_field.from_token_scope_string(token_scopes)
             
 
     def __str__(self):
@@ -168,9 +215,9 @@ class ScopeManager(BaseModel):
         access_fields = []
         
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):
-            stringified_scope = self.__getattribute__(field_name).get_scope_value()
-            if stringified_scope is not None:
-                access_fields.append(stringified_scope)
+            stringified_scopes = self.__getattribute__(field_name).get_scope_values()
+            if stringified_scopes is not None:
+                access_fields.extend(stringified_scopes)
         
         scopes = ' '.join(access_fields)
 
@@ -178,3 +225,14 @@ class ScopeManager(BaseModel):
             scopes += ' xedit'  # Probably faster than ' '.join()
 
         return scopes
+    
+    def get_openapi_scope_docs(self) -> dict[str, str]:
+        docs_dict = {}
+        
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):
+            scope_field: DBRecordScopeField = self.__getattribute__(field_name)
+            scope_docs = scope_field.openapi_scope_descriptions()
+            
+            docs_dict.update(scope_docs)
+            
+        return docs_dict

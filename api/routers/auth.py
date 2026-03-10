@@ -13,8 +13,9 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.responses import Response
 
+from api.middleware.scopes import oauth2_scheme
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.management import ScopeManager, ScopeAccessLevel
+from api.utils.auth.scopes.management import DBReadSubScope, ScopeManager, ScopeAccessLevel, SongScopeField
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import private_key, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from db.session.session import AsyncSessionDep
@@ -96,8 +97,7 @@ async def get_access_token(
         )
 
     # TODO: Provide specific scopes for each access level
-    scopes = ScopeManager(song_access=ScopeAccessLevel.read, chart_access=ScopeAccessLevel.all,
-                          chart_creator_access={ScopeAccessLevel.read, ScopeAccessLevel.write, ScopeAccessLevel.all}, cross_edit_access=True)
+    scopes = ScopeManager(song_access=SongScopeField(read_access=DBReadSubScope(granted=True)), cross_edit_access=True)
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -130,3 +130,8 @@ async def register(
         )
 
     return Response(status_code=status.HTTP_201_CREATED)
+
+# TODO
+@auth_router.get("/test")
+async def test(security_scopes: SecurityScopes):
+    return security_scopes

@@ -5,8 +5,10 @@ class User(SQLModel, table=True):
     __tablename__ = 'sendt_user'
 
     id: int | None = Field(default=None, primary_key=True)
-    username: str = Field(unique=True, nullable=False)
+    username: str = Field(unique=True, nullable=False, index=True)
     hash: str = Field(nullable=False)
+    disabled: bool = Field(default=False, nullable=False)
+    
     access_level_id: int = Field(default=1, foreign_key="user_access_level.id")
     user_access_level: UserAccess = Relationship(back_populates="users_with_access_level")
 

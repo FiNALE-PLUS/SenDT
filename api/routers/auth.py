@@ -7,10 +7,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 from starlette.responses import Response
 
-from api.dependencies.authentication import Token, authenticate_user_from_db, get_current_user
+from api.dependencies.authentication import Token, authenticate_user_from_db, authorise_current_user
 from api.dependencies.scopes import get_scopes_for_role
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.management import DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField, SdtBlobScopeField
+from api.utils.auth.scopes.management import ChartScopeField, DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField, SdtBlobScopeField
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
 from db.session.session import AsyncSessionDep
@@ -18,7 +18,10 @@ from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth')
 
-s_test = str(ScopeManager(song_access=SongScopeField(read_access=DBReadSubScope(granted=True)), sdt_blob_access=SdtBlobScopeField(read_access=DBReadSubScope(granted=True), write_access=DBWriteSubScope(granted=True))))
+s_test = ScopeManager(
+    song_access=SongScopeField(read_access=DBReadSubScope(granted=True)),
+    chart_access=ChartScopeField(read_access=DBReadSubScope(granted=True))
+    ).get_scope_array()
 
 @auth_router.post("/token")
 async def get_access_token(
@@ -72,7 +75,7 @@ async def register(
 async def test(current_user: 
     Annotated[User, 
               Security(
-                  get_current_user, 
+                  authorise_current_user, 
                   scopes=s_test
                   )]):
     return current_user

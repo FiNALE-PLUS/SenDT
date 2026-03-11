@@ -76,8 +76,10 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], securi
     user = await get_user_from_db(session, username=token_data.username)
     if user is None:
         raise credentials_exception
-    # Verify that the token grants the required scopes for the endpoint
-    for required_scope in security_scopes.scopes:
-        if required_scope not in token_data.scopes:
-            raise credentials_exception
+    # Only check for the required scopes if the token does not provide admin access
+    if 'admin' not in token_data.scopes:
+        # Verify that the token grants the required scopes for the endpoint
+        for required_scope in security_scopes.scopes:
+            if required_scope not in token_data.scopes:
+                raise credentials_exception
     return user

@@ -10,7 +10,7 @@ from starlette.responses import Response
 from api.dependencies.authentication import Token, authenticate_user_from_db, get_current_user
 from api.dependencies.scopes import get_scopes_for_role
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.management import DBReadSubScope, ScopeManager, SongScopeField
+from api.utils.auth.scopes.management import DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField, SdtBlobScopeField
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
 from db.session.session import AsyncSessionDep
@@ -18,7 +18,7 @@ from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth')
 
-song_read_scopes = SongScopeField(read_access=DBReadSubScope(granted=True)).get_scope_values()
+s_test = str(ScopeManager(song_access=SongScopeField(read_access=DBReadSubScope(granted=True)), sdt_blob_access=SdtBlobScopeField(read_access=DBReadSubScope(granted=True), write_access=DBWriteSubScope(granted=True))))
 
 @auth_router.post("/token")
 async def get_access_token(
@@ -59,7 +59,6 @@ async def register(
     try:
         session.add(User(username=form_data.username, hash=pw_hash))
         await session.commit()
-        # session.refresh(User(username=form_data.username, hash=hash))
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,6 +73,6 @@ async def test(current_user:
     Annotated[User, 
               Security(
                   get_current_user, 
-                  scopes=song_read_scopes
+                  scopes=s_test
                   )]):
     return current_user

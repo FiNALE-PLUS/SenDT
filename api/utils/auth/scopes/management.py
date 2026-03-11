@@ -188,6 +188,7 @@ class ScopeManager(BaseModel):
     video_blob_access:    VideoScopeField        = VideoScopeField()
 
     cross_edit_access:    bool                   = False
+    admin:                bool                   = False
     
     def match_token_string_scopes(self, token_scopes: str):
         # Reset permissions to then grant as found
@@ -211,6 +212,9 @@ class ScopeManager(BaseModel):
         """
         Generates a string as expected by the ``scope`` field of a JWT.
         """        
+        if self.admin:
+            return 'admin'
+        
         access_fields = []
         
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):
@@ -226,7 +230,10 @@ class ScopeManager(BaseModel):
         return scopes
     
     def get_openapi_scope_docs(self) -> dict[str, str]:
-        docs_dict = {}
+        docs_dict = {
+            'admin': 'Bypasses all scope requirements',
+            'xedit': 'Grants edit access to records owned by another user'
+        }
         
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordScopeField), self.__pydantic_fields__.items()):
             scope_field: DBRecordScopeField = self.__getattribute__(field_name)

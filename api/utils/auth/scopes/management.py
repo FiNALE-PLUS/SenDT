@@ -158,15 +158,15 @@ class GenreScopeField(DBRecordScopeField):
     
 class SdtBlobScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'sdt'
-    DocsName: ClassVar[str] = 'sdt'
+    DocsName: ClassVar[str] = 'SDT chart'
     
 class AudioScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'aud'
-    DocsName: ClassVar[str] = 'audio'
+    DocsName: ClassVar[str] = 'audio file'
     
 class VideoScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'v'
-    DocsName: ClassVar[str] = 'video'
+    DocsName: ClassVar[str] = 'video file'
 
 class ScopeManager(BaseModel):
     """

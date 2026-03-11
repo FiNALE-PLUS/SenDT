@@ -18,6 +18,7 @@ from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth')
 
+song_read_scopes = SongScopeField(read_access=DBReadSubScope(granted=True)).get_scope_values()
 
 @auth_router.post("/token")
 async def get_access_token(
@@ -73,6 +74,6 @@ async def test(current_user:
     Annotated[User, 
               Security(
                   get_current_user, 
-                  scopes=SongScopeField(read_access=DBReadSubScope(granted=True)).get_scope_values()
+                  scopes=song_read_scopes
                   )]):
     return current_user

@@ -212,8 +212,11 @@ class ScopeManager(BaseModel):
         """
         Generates a string as expected by the ``scope`` field of a JWT.
         """        
+        return ' '.join(self.get_scope_array())
+    
+    def get_scope_array(self):
         if self.admin:
-            return 'admin'
+            return ['admin']
         
         access_fields = []
         
@@ -221,13 +224,11 @@ class ScopeManager(BaseModel):
             stringified_scopes = self.__getattribute__(field_name).get_scope_values()
             if stringified_scopes is not None:
                 access_fields.extend(stringified_scopes)
-        
-        scopes = ' '.join(access_fields)
 
         if self.cross_edit_access:
-            scopes += ' xedit'  # Probably faster than ' '.join()
-
-        return scopes
+            access_fields.append('xedit')
+            
+        return access_fields
     
     def get_openapi_scope_docs(self) -> dict[str, str]:
         docs_dict = {

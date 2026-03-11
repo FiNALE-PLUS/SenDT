@@ -24,6 +24,8 @@ oauth2_scheme = OAuth2PasswordBearer(
     scopes=ScopeManager().get_openapi_scope_docs()
 )
 
+ADMIN_SCOPE_VALUE = ScopeManager(admin=True).get_scope_array()
+
 class UserInDB(BaseModel):
     username: str
     
@@ -77,7 +79,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], securi
     if user is None:
         raise credentials_exception
     # Only check for the required scopes if the token does not provide admin access
-    if 'admin' not in token_data.scopes:
+    if token_data.scopes != ADMIN_SCOPE_VALUE:
         # Verify that the token grants the required scopes for the endpoint
         for required_scope in security_scopes.scopes:
             if required_scope not in token_data.scopes:

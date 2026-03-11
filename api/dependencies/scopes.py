@@ -15,5 +15,10 @@ def get_scopes_for_role(role: str) -> ScopeManager:
                 chart_creator_access=ChartCreatorScopeField(read_access=DBReadSubScope(granted=True)),
                 genre_access=GenreScopeField(read_access=DBReadSubScope(granted=True)),
             )
+        case 'dev':
+            # TODO
+            raise NotImplementedError()
+        case 'admin':
+            return ScopeManager(admin=True)
         case _:
             raise ValueError(f'role {role} not recognised')

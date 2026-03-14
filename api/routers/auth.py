@@ -13,10 +13,11 @@ from api.utils.auth.hasher import verify_password, get_password_hash
 from api.utils.auth.scopes.management import ChartScopeField, DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField, SdtBlobScopeField
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
+from api.utils.auth.two_factor_auth.totp import get_otp_key
 from db.session.session import AsyncSessionDep
 from db.models.users import User, UserAccess
 
-auth_router = APIRouter(prefix='/auth')
+auth_router = APIRouter(prefix='/auth', tags=['Authentication'])
 
 s_test = ScopeManager(
     song_access=SongScopeField(read_access=DBReadSubScope(granted=True)),
@@ -36,9 +37,13 @@ async def get_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-    role_name = (await session.exec(select(UserAccess).where(UserAccess.id == user.access_level_id))).one()
-    
-    scopes = get_scopes_for_role(role_name.name)
+    if user.two_factor_enabled:
+        role_name = (await session.exec(select(UserAccess).where(UserAccess.id == user.access_level_id))).one()
+        
+        scopes = get_scopes_for_role(role_name.name)
+        
+    else:
+        ...
     
     access_token = create_access_token(
         data={"sub": user.username, "scope": str(scopes)}, expires_delta=TOKEN_EXPIRY_TIMEDELTA
@@ -60,7 +65,7 @@ async def register(
     pw_hash = get_password_hash(form_data.password)
 
     try:
-        session.add(User(username=form_data.username, hash=pw_hash))
+        session.add(User(username=form_data.username, hash=pw_hash, two_factor_secret=get_otp_key()))
         await session.commit()
     except IntegrityError:
         raise HTTPException(
@@ -71,11 +76,6 @@ async def register(
     return Response(status_code=status.HTTP_201_CREATED)
 
 # TODO
-@auth_router.get("/test")
-async def test(current_user: 
-    Annotated[User, 
-              Security(
-                  authorise_current_user, 
-                  scopes=s_test
-                  )]):
+@auth_router.get("/register-2fa")
+async def test(current_user: Annotated[User, Security(authorise_current_user, scopes=s_test)]):
     return current_user

@@ -1,7 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from enum import StrEnum
 import re
-from typing import ClassVar
+from typing import ClassVar, override
 from warnings import deprecated
 
 from pydantic import BaseModel
@@ -54,15 +54,65 @@ class DBDeleteSubScope(DBRecordSubScope):
 # class DBCrossAccessScope(DBRecordSubScope):
 #     VariantName: ClassVar[str] = 'x'
 
-class DBRecordScopeField(BaseModel, ABC):
+class ScopeField(BaseModel, ABC):
+    ScopeName: ClassVar[str] = 'TODO'
+    
+    @abstractmethod
+    def get_scope_values(self) -> list[str]:
+        """
+        Used to get a scope field's individual scope values. Scopes that only return a single scope must return a list containing said singular scope.
+
+        Returns:
+            list[str]: A list of all scope values that should be included within the ``scope`` field of the relevant JWT
+        """
+        ...
+    
+    @abstractmethod
+    def from_token_scope_string(self, token_scope_string: str) -> None:
+        """
+        Mutates the scope field to match its state with any relevant scopes from a JWT. Accepts the value of the token's ``scope`` field as-is.
+
+        Args:
+            token_scope_string (str): The full ``scope`` value of the token to match scopes of.
+        """
+        ...
+        
+    @abstractmethod
+    def openapi_scope_descriptions(self) -> dict[str, str]:
+        """
+        Generates a dictionary containing the scope names and descriptions for the current field to be inserted into authentication docs.
+
+        Returns:
+            dict[str, str]: A dictionary of keys representing the individual stringified scopes, and values designating the documentation for the respective scope.
+        """
+        ...
+    
+    
+
+class BooleanScopeField(ScopeField, ABC):
+    Documentation: ClassVar[str] = 'TODO'
+    
+    granted: bool
+    
+    @abstractmethod
+    def get_scope_values(self) -> list[str]:
+        ...
+    
+    @abstractmethod
+    def from_token_scope_string(self, token_scope_string: str) -> None:
+        ...
+    
+    @override
+    def openapi_scope_descriptions(self) -> dict[str, str]:
+        return {self.ScopeName: self.Documentation}
+
+class DBRecordScopeField(ScopeField, ABC):
     """
     Encapsulates applicable database-related scopes for a single type of content.
     Used by the API to determine whether a user can read, write or delete certain content.
     """
-    ScopeName: ClassVar[str] = 'TODO'
     DocsName: ClassVar[str] = 'TODO'
 
-    # access_level: ScopeAccessLevel | set[ScopeAccessLevel] = ScopeAccessLevel.none
     read_access:   DBReadSubScope   = DBReadSubScope()
     write_access:  DBWriteSubScope  = DBWriteSubScope()
     delete_access: DBDeleteSubScope = DBDeleteSubScope()
@@ -70,14 +120,15 @@ class DBRecordScopeField(BaseModel, ABC):
     @classmethod
     def get_string_for_subscope(cls, subscope: DBRecordSubScope):
         return f'{cls.ScopeName}:{subscope.__class__.SubScopeName}'
-        
+    
+    @override
     def get_scope_values(self) -> list[str]:
         scope_values = []
         
         for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
-            subscope: DBRecordSubScope = self.__getattribute__(field_name)
-            if subscope.granted:
-                scope_values.append(self.get_string_for_subscope(subscope))
+            sub_scope: DBRecordSubScope = self.__getattribute__(field_name)
+            if sub_scope.granted:
+                scope_values.append(self.get_string_for_subscope(sub_scope))
         
         return scope_values
     
@@ -125,7 +176,8 @@ class DBRecordScopeField(BaseModel, ABC):
         
         for scope in scopes:
             self.try_from_string(scope)
-        
+    
+    @override
     def openapi_scope_descriptions(self) -> dict[str, str]:
         scope_descriptions = {}
         
@@ -178,17 +230,19 @@ class ScopeManager(BaseModel):
     ``cross_edit_access`` is a special scope allowing for users to edit content submitted by another user (where as the API should otherwise enforce ownership for writes to a record).
     """
 
-    song_access:          SongScopeField         = SongScopeField()
-    chart_access:         ChartScopeField        = ChartScopeField()
-    artist_access:        ArtistScopeField       = ArtistScopeField()
-    chart_creator_access: ChartCreatorScopeField = ChartCreatorScopeField()
-    genre_access:         GenreScopeField        = GenreScopeField()
-    sdt_blob_access:      SdtBlobScopeField      = SdtBlobScopeField()
-    audio_blob_access:    AudioScopeField        = AudioScopeField()
-    video_blob_access:    VideoScopeField        = VideoScopeField()
-
-    cross_edit_access:    bool                   = False
-    admin:                bool                   = False
+    song_access:            SongScopeField         = SongScopeField()
+    chart_access:           ChartScopeField        = ChartScopeField()
+    artist_access:          ArtistScopeField       = ArtistScopeField()
+    chart_creator_access:   ChartCreatorScopeField = ChartCreatorScopeField()
+    genre_access:           GenreScopeField        = GenreScopeField()
+    sdt_blob_access:        SdtBlobScopeField      = SdtBlobScopeField()
+    audio_blob_access:      AudioScopeField        = AudioScopeField()
+    video_blob_access:      VideoScopeField        = VideoScopeField()
+    
+    # TODO: complete and replace with ``BooleanScopeField``
+    allow_2fa_verification: bool                   = False
+    cross_edit_access:      bool                   = False
+    admin:                  bool                   = False
     
     def match_token_string_scopes(self, token_scopes: str):
         # Reset permissions to then grant as found
@@ -196,10 +250,10 @@ class ScopeManager(BaseModel):
           
         # While the split isn't necessary as of writing, doing so now will prevent an accidental collision 
         # causing unwarranted permissions being given to users.
-        seperate_scopes = token_scopes.split(' ')
-        if 'admin' in seperate_scopes:
+        separate_scopes = token_scopes.split(' ')
+        if 'admin' in separate_scopes:
             self.admin = True
-        if 'xedit' in seperate_scopes:
+        if 'xedit' in separate_scopes:
             self.cross_edit_access = True
         
         # Dynamically get all ``DBRecordScopeField``s, ensuring inclusion of any future fields as they are added

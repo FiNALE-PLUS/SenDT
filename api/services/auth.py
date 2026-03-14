@@ -9,7 +9,7 @@ class UnknownRole(ValueError):
     """
     Used to document an unknown role being given by a parent function to convert into permissions. 
     Indicates that the permission getter function is likely out-of date, 
-    or that unauthorisd edits to the DB may have been made.
+    or that unauthorised edits to the DB may have been made.
     """
     ...
 

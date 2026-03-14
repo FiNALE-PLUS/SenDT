@@ -1,8 +1,9 @@
-from api.utils.auth.scopes.management import (
-    ScopeManager, 
+from api.utils.auth.scopes.fields.db_access import (
     SongScopeField, ChartScopeField, ArtistScopeField, ChartCreatorScopeField, 
     GenreScopeField, SdtBlobScopeField, AudioScopeField, VideoScopeField
     )
+
+from api.utils.auth.scopes.scope_manager import ScopeManager
 
 
 class UnknownRole(ValueError):

@@ -10,7 +10,8 @@ from starlette.responses import Response
 from api.dependencies.authentication import Token, authenticate_user_from_db, authorise_current_user
 from api.dependencies.scopes import get_scopes_for_role
 from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.management import ChartScopeField, DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField, SdtBlobScopeField
+from api.utils.auth.scopes.scope_manager import ChartScopeField, ScopeManager, SongScopeField, SdtBlobScopeField
+from api.utils.auth.scopes.fields import DBReadSubScope
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
 from api.utils.auth.two_factor_auth.totp import get_otp_key
@@ -43,7 +44,8 @@ async def get_access_token(
         scopes = get_scopes_for_role(role_name.name)
         
     else:
-        ...
+        # Force only scope to verify 2FA
+        scopes = ...
     
     access_token = create_access_token(
         data={"sub": user.username, "scope": str(scopes)}, expires_delta=TOKEN_EXPIRY_TIMEDELTA

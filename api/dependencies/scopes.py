@@ -1,5 +1,5 @@
-
-from api.utils.auth.scopes.management import ArtistScopeField, ChartCreatorScopeField, ChartScopeField, DBReadSubScope, GenreScopeField, ScopeManager, SongScopeField
+from api.utils.auth.scopes.fields import DBReadSubScope
+from api.utils.auth.scopes.scope_manager import ArtistScopeField, ChartCreatorScopeField, ChartScopeField, GenreScopeField, ScopeManager, SongScopeField
 
 
 def get_scopes_for_role(role: str) -> ScopeManager:

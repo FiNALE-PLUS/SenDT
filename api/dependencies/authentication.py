@@ -12,7 +12,8 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from api.utils.auth.hasher import verify_password
-from api.utils.auth.scopes.management import ScopeManager
+from api.utils.auth.scopes.fields.boolean_field import AdministratorScope
+from api.utils.auth.scopes.scope_manager import ScopeManager
 from api.utils.auth.token_const import private_key, ALGORITHM
 from db.session.session import AsyncSessionDep
 from db.models.users import User
@@ -24,7 +25,7 @@ oauth2_scheme = OAuth2PasswordBearer(
     scopes=ScopeManager().get_openapi_scope_docs()
 )
 
-ADMIN_SCOPE_VALUE = ScopeManager(admin=True).get_scope_array()
+ADMIN_SCOPE_VALUE = AdministratorScope(granted=True).get_scope_values()
 
 class RedactedUserInDB(BaseModel):
     username: str

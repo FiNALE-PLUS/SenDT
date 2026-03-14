@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Security
 
 from api.dependencies.authentication import authorise_current_user
-from api.utils.auth.scopes.management import DBDeleteSubScope, DBReadSubScope, DBWriteSubScope, ScopeManager, SongScopeField
+from api.utils.auth.scopes.fields import DBDeleteSubScope, DBReadSubScope, DBWriteSubScope
+from api.utils.auth.scopes.scope_manager import ScopeManager, SongScopeField
 from db.models.users import User
 
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from api.utils.auth.scopes.fields.boolean_field import AdministratorScope, CrossEditScope, VerifyTwoFactorScope
 from api.utils.auth.scopes.fields.db_access import DBRecordScopeField, ArtistScopeField, AudioScopeField, ChartCreatorScopeField, ChartScopeField, GenreScopeField, SdtBlobScopeField, SongScopeField, VideoScopeField
 from api.utils.auth.scopes.fields.interface import ScopeField
+from api.utils.auth.scopes.fields.totp_access import TOTPScopeField
 
 class ScopeManager(BaseModel):
     """
@@ -18,8 +19,9 @@ class ScopeManager(BaseModel):
     
     ``cross_edit_access`` is a special scope allowing for users to edit content submitted by another user (where as the API should otherwise enforce ownership for writes to a record).
     """
-
-    allow_2fa_verification: VerifyTwoFactorScope   = VerifyTwoFactorScope()
+    
+    totp_access:            TOTPScopeField         = TOTPScopeField()
+    
     cross_edit_access:      CrossEditScope         = CrossEditScope()
     admin:                  AdministratorScope     = AdministratorScope()
     

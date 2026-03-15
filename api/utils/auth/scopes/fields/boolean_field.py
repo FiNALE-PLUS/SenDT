@@ -1,5 +1,6 @@
 from abc import ABC
 from typing import ClassVar, override
+from warnings import deprecated
 
 from api.utils.auth.scopes.fields.interface import ScopeField
 
@@ -48,7 +49,7 @@ class AdministratorScope(BooleanScopeField):
     ScopeName: ClassVar[str] = 'admin'
     Documentation: ClassVar[str] = 'Bypasses all scope requirements'
 
-
+@deprecated('Use TOTPScopeField instead')
 class VerifyTwoFactorScope(BooleanScopeField):
     ScopeName: ClassVar[str] = 'totp:v'
     Documentation: ClassVar[str] = 'Grants permission to verify that TOTP 2FA has been correctly configured on a user\'s device'

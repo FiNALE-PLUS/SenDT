@@ -11,6 +11,7 @@ from api.dependencies.authentication import TOTPCode, Token, authenticate_user_f
 from api.dependencies.scopes import get_scopes_for_role
 from api.utils.auth.hasher import verify_password, get_password_hash
 from api.utils.auth.scopes.fields.boolean_field import VerifyTwoFactorScope
+from api.utils.auth.scopes.fields.totp_access import TOTPScopeField, TOTPVerifySubScope
 from api.utils.auth.scopes.scope_manager import ChartScopeField, ScopeManager, SongScopeField, SdtBlobScopeField
 from api.utils.auth.scopes.fields import DBReadSubScope
 from api.utils.auth.token import create_access_token
@@ -22,7 +23,7 @@ from db.models.users import User, UserAccess
 auth_router = APIRouter(prefix='/auth', tags=['Authentication'])
 
 # TODO: Update the scope manager with the correct argument one migrated, and clean up the tanggle of endpoints with overlapping and incomplete goals
-two_factor_verification_scopes = ScopeManager(two_factor_verification_scopes=VerifyTwoFactorScope(granted=True).get_scope_values())
+two_factor_verification_scopes = ScopeManager(totp_access=TOTPScopeField(verification_access=TOTPVerifySubScope(granted=True))).get_scope_array()
 
 s_test = ScopeManager(
     song_access=SongScopeField(read_access=DBReadSubScope(granted=True)),
@@ -74,7 +75,7 @@ async def get_access_token(
 # TODO: Update scopes to add 2FA verification and 2FA access separately, then implement two-part login
 @auth_router.post("/token")
 async def get_full_token_via_two_factor_authentication(
-    current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPUrlEncodedForm
+    current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPCode
     ):
     ...
 

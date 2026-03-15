@@ -1,20 +1,21 @@
 from typing import ClassVar, override
 
-from api.utils.auth.scopes.fields.interface import ScopeField
+from api.utils.auth.scopes.fields.interface import ScopeField, ScopeFieldWithSubScopes, SubScopeField
 
 
-class TOTPScopeField(ScopeField):
+class TOTPVerifySubScope(SubScopeField):
+    SubScopeName: ClassVar[str] = 'v'
+    description: ClassVar[str] = 'Manages ability to verify TOTP has been setup correctly '
+    
+class TOTPTokenSubScope(SubScopeField):
+    SubScopeName: ClassVar[str] = 't'
+    description: ClassVar[str] = 'Manages ability to use TOTP for login'
+
+class TOTPScopeField(ScopeFieldWithSubScopes):
     ScopeName: ClassVar[str] = 'totp'
+    DocsName: ClassVar[str]  = 'two-factor authentication'
     
-    @override
-    def get_scope_values(self) -> list[str]:
-        ...
+    verification_access: TOTPVerifySubScope = TOTPVerifySubScope()
+    token_access: TOTPTokenSubScope = TOTPTokenSubScope()
     
-    @override
-    def from_token_scope_string(self, token_scope_string: str) -> None:
-        
-        ...
-        
-    @override
-    def openapi_scope_descriptions(self) -> dict[str, str]:
-        ...
+    

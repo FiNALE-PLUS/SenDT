@@ -14,14 +14,15 @@ from api.utils.auth.scopes.fields.boolean_field import VerifyTwoFactorScope
 from api.utils.auth.scopes.scope_manager import ChartScopeField, ScopeManager, SongScopeField, SdtBlobScopeField
 from api.utils.auth.scopes.fields import DBReadSubScope
 from api.utils.auth.token import create_access_token
-from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA
+from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA, TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
 from api.utils.auth.two_factor_auth.totp import get_cur_totp, get_otp_key
 from db.session.session import AsyncSessionDep
 from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth', tags=['Authentication'])
 
-two_factor_verification_scopes = VerifyTwoFactorScope(granted=True).get_scope_values()
+# TODO: Update the scope manager with the correct argument one migrated, and clean up the tanggle of endpoints with overlapping and incomplete goals
+two_factor_verification_scopes = ScopeManager(two_factor_verification_scopes=VerifyTwoFactorScope(granted=True).get_scope_values())
 
 s_test = ScopeManager(
     song_access=SongScopeField(read_access=DBReadSubScope(granted=True)),
@@ -34,8 +35,7 @@ bad_credentials_exception = HTTPException(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-# TODO: migrate TOTP check to new endpoint
-@auth_router.post("/access-token")
+@auth_router.post("/2fa-verification-token")
 async def get_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSessionDep
@@ -53,13 +53,13 @@ async def get_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     # TODO: Complete and test 2FA workflow
-    user = await authenticate_user_from_db_with_totp(session, form_data.username, form_data.password, totp)
+    user = await authenticate_user_from_db(session, form_data.username, form_data.password)
     
     if user is None:
         raise bad_credentials_exception
     
-    user.last_two_factor = get_password_hash(totp)
-    await session.commit()
+    # user.last_two_factor = get_password_hash(totp)
+    # await session.commit()
         
     
     access_role = (await session.exec(select(UserAccess).where(UserAccess.id == user.access_level_id))).one()
@@ -72,8 +72,8 @@ async def get_access_token(
 
 
 # TODO: Update scopes to add 2FA verification and 2FA access separately, then implement two-part login
-@auth_router.post("/2fa-access-token")
-async def get_two_factor_verification_token(
+@auth_router.post("/token")
+async def get_full_token_via_two_factor_authentication(
     current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPUrlEncodedForm
     ):
     ...
@@ -102,7 +102,7 @@ async def get_two_factor_verification_token(
         
     scopes = two_factor_verification_scopes
     access_token = create_access_token(
-        data={"sub": user.username, "scope": str(scopes)}, expires_delta=TOKEN_EXPIRY_TIMEDELTA
+        data={"sub": user.username, "scope": str(scopes)}, expires_delta=TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
     )
     return Token(access_token=access_token, token_type="bearer")
 

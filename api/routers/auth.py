@@ -34,6 +34,7 @@ bad_credentials_exception = HTTPException(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+# TODO: migrate TOTP check to new endpoint
 @auth_router.post("/access-token")
 async def get_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],

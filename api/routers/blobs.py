@@ -17,7 +17,7 @@ from db.session.session import AsyncSessionDep
 from utils.assets.video.transcode import NotAVideo, transcode_finale_pv
 
 
-blob_router = APIRouter(prefix='/blob')
+blob_router = APIRouter(prefix='/blob', tags=['Blobs'])
 
 
 @blob_router.post('/video')

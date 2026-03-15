@@ -4,34 +4,17 @@ from typing import ClassVar, override
 
 from pydantic import BaseModel
 
-from api.utils.auth.scopes.fields.interface import ScopeField
+from api.utils.auth.scopes.fields.interface import ScopeField, SubScopeField, whitespace_pattern
 
-whitespace_pattern = compile_regex(r'\s')
-
-class DBRecordSubScope(BaseModel, ABC):
-    SubScopeName: ClassVar[str] = 'TODO'
-    description: ClassVar[str] = 'TODO'
-    
-    granted: bool = False
-    
-    def __bool__(self):
-        return self.granted
-    
-    @classmethod
-    def get_subscope_string_with_scope(cls, scope: str):
-        if whitespace_pattern.match(scope):
-            raise ValueError('Scope must not contain whitespace')
-        return f'{scope}:{cls.SubScopeName}'
-
-class DBReadSubScope(DBRecordSubScope):
+class DBReadSubScope(SubScopeField):
     SubScopeName: ClassVar[str] = 'r'
     description: ClassVar[str] = 'Manages read access'
     
-class DBWriteSubScope(DBRecordSubScope):
+class DBWriteSubScope(SubScopeField):
     SubScopeName: ClassVar[str] = 'w'
     description: ClassVar[str] = 'Manages insertion and update access'
     
-class DBDeleteSubScope(DBRecordSubScope):
+class DBDeleteSubScope(SubScopeField):
     SubScopeName: ClassVar[str] = 'd'
     description: ClassVar[str] = 'Manages deletion access'
 
@@ -48,15 +31,15 @@ class DBRecordScopeField(ScopeField, ABC):
     delete_access: DBDeleteSubScope = DBDeleteSubScope()
         
     @classmethod
-    def get_string_for_subscope(cls, subscope: DBRecordSubScope):
+    def get_string_for_subscope(cls, subscope: SubScopeField):
         return f'{cls.ScopeName}:{subscope.__class__.SubScopeName}'
     
     @override
     def get_scope_values(self) -> list[str]:
         scope_values = []
         
-        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
-            sub_scope: DBRecordSubScope = self.__getattribute__(field_name)
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, SubScopeField), self.__pydantic_fields__.items()):
+            sub_scope: SubScopeField = self.__getattribute__(field_name)
             if sub_scope.granted:
                 scope_values.append(self.get_string_for_subscope(sub_scope))
         
@@ -79,8 +62,8 @@ class DBRecordScopeField(ScopeField, ABC):
             raise ValueError('This function is intended to search a single scope. Please use `from_token_scope_string` if you want to pass a whole token to parse.')
         
         
-        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
-            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, SubScopeField), self.__pydantic_fields__.items()):
+            subscope: SubScopeField = self.__getattribute__(field_name)
             if subscope.get_subscope_string_with_scope(self.ScopeName) == scope_string:
                 subscope.granted = True
                 return
@@ -98,8 +81,8 @@ class DBRecordScopeField(ScopeField, ABC):
         Returns:
             _type_: The deserialised scopes of the group represented by `token_scope_string`.
         """
-        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
-            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, SubScopeField), self.__pydantic_fields__.items()):
+            subscope: SubScopeField = self.__getattribute__(field_name)
             subscope.granted = False
         
         scopes = token_scope_string.split(' ')
@@ -111,8 +94,8 @@ class DBRecordScopeField(ScopeField, ABC):
     def openapi_scope_descriptions(self) -> dict[str, str]:
         scope_descriptions = {}
         
-        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, DBRecordSubScope), self.__pydantic_fields__.items()):
-            subscope: DBRecordSubScope = self.__getattribute__(field_name)
+        for field_name, _ in filter(lambda f: issubclass(f[1].annotation, SubScopeField), self.__pydantic_fields__.items()):
+            subscope: SubScopeField = self.__getattribute__(field_name)
             scope_descriptions[subscope.get_subscope_string_with_scope(self.ScopeName)] = f'{subscope.description} for {self.DocsName}(s)'
             
         

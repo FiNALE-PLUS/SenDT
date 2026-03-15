@@ -18,8 +18,12 @@ async def on_startup():
     # sync_engine.pool = NullPool()
     await configure_default_db_enums()
 
+app_summary = r"""
+The API to be used by the SenDT front end to manage data for all collaborators.
+""".strip()
 
-app = FastAPI(on_startup=[on_startup])
+
+app = FastAPI(on_startup=[on_startup], title='SenDT API', summary=app_summary)
 
 v1_api_router = APIRouter(prefix="/api/v1")
 v1_api_router.include_router(auth_router)

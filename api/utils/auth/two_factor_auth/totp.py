@@ -6,6 +6,9 @@ base32_charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 def get_otp_key():
     return pyotp.random_base32()
 
+def get_cur_totp(key: str):
+    return pyotp.TOTP(key).now()
+
 def get_totp_instance(account_name: str, secret: str | None):
     if secret is None:
         secret == get_otp_key()

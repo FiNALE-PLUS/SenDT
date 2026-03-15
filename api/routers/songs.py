@@ -9,7 +9,7 @@ from api.utils.auth.scopes.scope_manager import ScopeManager, SongScopeField
 from db.models.users import User
 
 
-song_router = APIRouter(prefix='/song')
+song_router = APIRouter(prefix='/song', tags=['Songs'])
 
 song_read_scopes = ScopeManager(song_access=SongScopeField(read_access=DBReadSubScope(granted=True))).get_scope_array()
 song_write_scopes = ScopeManager(song_access=SongScopeField(write_access=DBWriteSubScope(granted=True))).get_scope_array()

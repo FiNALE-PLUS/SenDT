@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from re import compile as compile_regex
 from typing import ClassVar
 
 from pydantic import BaseModel
@@ -36,3 +37,27 @@ class ScopeField(BaseModel, ABC):
             dict[str, str]: A dictionary of keys representing the individual stringified scopes, and values designating the documentation for the respective scope.
         """
         ...
+        
+
+whitespace_pattern = compile_regex(r'\s')
+
+        
+class SubScopeField(BaseModel, ABC):
+    SubScopeName: ClassVar[str] = 'TODO'
+    description: ClassVar[str] = 'TODO'
+    
+    granted: bool = False
+    
+    def __bool__(self):
+        return self.granted
+    
+    @classmethod
+    def get_subscope_string_with_scope(cls, scope: str):
+        if whitespace_pattern.match(scope):
+            raise ValueError('Scope must not contain whitespace')
+        return f'{scope}:{cls.SubScopeName}'
+    
+    
+class ScopeFieldWithSubScopes(ScopeField, ABC):
+    # TODO: Replace DB access scopes and 2FA scopes with implementations of this class.
+    ...

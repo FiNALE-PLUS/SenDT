@@ -2,11 +2,11 @@
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Form, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -15,6 +15,7 @@ from api.utils.auth.hasher import verify_password
 from api.utils.auth.scopes.fields.boolean_field import AdministratorScope
 from api.utils.auth.scopes.scope_manager import ScopeManager
 from api.utils.auth.token_const import private_key, ALGORITHM
+from api.utils.auth.two_factor_auth.totp import get_cur_totp
 from db.session.session import AsyncSessionDep
 from db.models.users import User
 
@@ -39,25 +40,39 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
     scopes: list[str] = []
-
+    
+class TOTPCode(BaseModel):
+    totp: str = Field(pattern=r'^\d{8}$')
+    
+# TOTPUrlEncodedForm = Annotated[Annotated[str, Field(pattern=r'^\d{8}$')], Form()]
+    
 async def get_user_from_db(session: AsyncSession, username: str):
     try:
         # Omit sensitive data
         db_user = (await session.exec(select(User).where(User.username == username))).one()
-        return RedactedUserInDB(username=db_user.username, disabled=db_user.disabled)
+        return db_user
     except NoResultFound:
         return None
+
+async def get_redacted_user_from_db(session: AsyncSession, username: str):
+    user = await get_user_from_db(session, username)
+    if user is not None:
+        return RedactedUserInDB(username=user.username, disabled=user.disabled)
 
 
 async def authenticate_user_from_db(session: AsyncSession, username: str, password: str) -> User | None:
-    try:
-        db_user = (await session.exec(select(User).where(User.username == username))).one()
+    db_user = await get_user_from_db(session, username)
 
-        if verify_password(password, db_user.hash):
-            return db_user
-        return None
-    except NoResultFound:
-        return None
+    if db_user is not None and verify_password(password, db_user.hash):
+        return db_user
+    
+async def authenticate_user_from_db_with_totp(session: AsyncSession, username: str, password: str, totp: str) -> User | None:
+    db_user = await get_user_from_db(session, username)
+    cur_totp = get_cur_totp(db_user.two_factor_secret)
+
+    if db_user is not None and verify_password(password, db_user.hash) \
+        and cur_totp == totp and not verify_password(totp, db_user.last_two_factor):
+        return db_user
 
 
 async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], security_scopes: SecurityScopes, session: AsyncSessionDep) -> RedactedUserInDB:
@@ -100,7 +115,7 @@ async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], 
         raise credentials_exception
     
     # Verify that there is the specified user for the token in the DB
-    user = await get_user_from_db(session, username=token_data.username)
+    user = await get_redacted_user_from_db(session, username=token_data.username)
     if user is None:
         raise credentials_exception
     

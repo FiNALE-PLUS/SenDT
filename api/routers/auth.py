@@ -175,7 +175,7 @@ async def get_access_token(
     access_role = (await session.exec(select(UserAccess).where(UserAccess.id == unredacted_user.access_level_id))).one()
     scopes = str(get_scopes_for_role(access_role.name))
     access_token = create_access_token(
-        data={"sub": current_user.username, "scope": scopes}, expires_delta=TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
+        data={"sub": current_user.username, "scope": scopes}, expires_delta=TOKEN_EXPIRY_TIMEDELTA
     )
     
     return Token(access_token=access_token, token_type="bearer")

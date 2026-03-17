@@ -15,7 +15,7 @@ from api.utils.auth.hasher import verify_password
 from api.utils.auth.scopes.fields.boolean_field import AdministratorScope
 from api.utils.auth.scopes.scope_manager import ScopeManager
 from api.utils.auth.token_const import private_key, ALGORITHM
-from api.utils.auth.two_factor_auth.totp import get_cur_totp
+from api.utils.auth.two_factor_auth.totp import get_cur_totp_for_key
 from db.session.session import AsyncSessionDep
 from db.models.users import User
 
@@ -48,7 +48,6 @@ class TOTPCode(BaseModel):
     
 async def get_user_from_db(session: AsyncSession, username: str):
     try:
-        # Omit sensitive data
         db_user = (await session.exec(select(User).where(User.username == username))).one()
         return db_user
     except NoResultFound:
@@ -60,7 +59,7 @@ async def get_redacted_user_from_db(session: AsyncSession, username: str):
         return RedactedUserInDB(username=user.username, disabled=user.disabled)
 
 
-async def authenticate_user_from_db(session: AsyncSession, username: str, password: str) -> User | None:
+async def authenticate_user_from_db_without_totp(session: AsyncSession, username: str, password: str) -> User | None:
     db_user = await get_user_from_db(session, username)
 
     if db_user is not None and verify_password(password, db_user.hash):
@@ -68,7 +67,7 @@ async def authenticate_user_from_db(session: AsyncSession, username: str, passwo
     
 async def authenticate_user_from_db_with_totp(session: AsyncSession, username: str, password: str, totp: str) -> User | None:
     db_user = await get_user_from_db(session, username)
-    cur_totp = get_cur_totp(db_user.two_factor_secret)
+    cur_totp = get_cur_totp_for_key(db_user.two_factor_secret)
 
     if db_user is not None and verify_password(password, db_user.hash) \
         and cur_totp == totp and not verify_password(totp, db_user.last_two_factor):
@@ -107,8 +106,8 @@ async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], 
             raise credentials_exception
         
         # extract the scopes from the token to use for authentication
-        required_scope: str = payload.get("scope", "")
-        token_scopes = required_scope.split(" ")
+        raw_token_scopes: str = payload.get("scope", "")
+        token_scopes = raw_token_scopes.split(" ")
         token_data = TokenData(scopes=token_scopes, username=username)
     
     except InvalidTokenError, ExpiredSignatureError:
@@ -123,11 +122,12 @@ async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], 
     if user.disabled:
         raise credentials_exception
     
+    
     # Only check for the required scopes if the token does not provide admin access
     if token_data.scopes != ADMIN_SCOPE_VALUE:
         # Verify that the token grants the required scopes for the endpoint
-        for required_scope in security_scopes.scopes:
-            if required_scope not in token_data.scopes:
+        for scope in security_scopes.scopes:
+            if scope not in token_data.scopes:
                 raise credentials_exception
     
     return user

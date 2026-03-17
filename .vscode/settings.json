@@ -1,8 +1,11 @@
 {
     "cSpell.words": [
+        "fernet",
         "ondelete",
+        "pwdlib",
         "sendt",
         "totp",
+        "unredacted",
         "utage",
         "xedit"
     ]

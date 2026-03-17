@@ -10,10 +10,10 @@ from sqlmodel import select
 
 from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authenticate_user_from_db_with_totp, authorise_current_user, get_user_from_db
 from api.dependencies.auth.responses import bad_credentials_exception, two_factor_disabled_exception, two_factor_enabled_exception
-from api.dependencies.auth.scopes import two_factor_setup_verification_scope_manager
+from api.dependencies.auth.scopes import two_factor_setup_verification_scope_manager, two_factor_access_request_token_scope_manager
 from api.dependencies.auth.two_factor_authentication import verify_totp_for_token_user
 from api.dependencies.scopes import get_scopes_for_role
-from api.services.two_factor import check_2fa_disabled, get_plain_2fa_key_from_redacted_user
+from api.services.two_factor import check_2fa_disabled, check_2fa_enabled, get_plain_2fa_key_from_redacted_user
 from api.utils.auth.hasher import verify_password, get_password_hash
 from api.utils.auth.scopes.fields.totp_access import TOTPScopeField, TOTPVerifySubScope
 from api.utils.auth.scopes.scope_manager import ChartScopeField, ScopeManager, SongScopeField, SdtBlobScopeField
@@ -113,8 +113,8 @@ async def get_two_factor_uri(
     
     return {'uri': uri}
 
-@auth_router.post("/2fa-token")
-async def get_full_access_token(
+@auth_router.post("/2fa-verify")
+async def verify_2fa_registration(
     current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     totp_form: Annotated[TOTPCode, Form()]
@@ -130,6 +130,55 @@ async def get_full_access_token(
     await session.commit()
     
     return Response(status_code=status.HTTP_200_OK)
+
+# TODO: Add endpoints to login with 2FA after verified
+
+@auth_router.post("/access-request-token")
+async def get_access_request_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: AsyncSessionDep
+):
+    if not form_data.username or not form_data.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide both username and password",
+        )
+        
+    user = await authenticate_user_from_db_without_totp(session, form_data.username, form_data.password)
+    if user is None:
+        raise bad_credentials_exception
+    # This does trigger another query, but avoids multiple places where verification can be broken
+    await check_2fa_enabled(RedactedUserInDB(username=user.username, disabled=user.disabled), session)
+
+    scopes = str(two_factor_access_request_token_scope_manager)
+    access_token = create_access_token(
+        data={"sub": user.username, "scope": scopes}, expires_delta=TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
+    )
+    return Token(access_token=access_token, token_type="bearer")
+
+@auth_router.post("/api-access-token")
+async def get_access_token(
+    current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_access_request_token_scope_manager.get_scope_array())], 
+    session: AsyncSessionDep,
+    totp_form: Annotated[TOTPCode, Form()]
+    ):
+    cur_timestamp = datetime.now()
+    await check_2fa_enabled(current_user, session)
+    
+    if not await verify_totp_for_token_user(current_user, session, totp_form.totp, cur_timestamp):
+        raise bad_credentials_exception
+    
+    unredacted_user = await get_user_from_db(session=session, username=current_user.username)
+    if unredacted_user is None:
+        raise bad_credentials_exception
+    
+    access_role = (await session.exec(select(UserAccess).where(UserAccess.id == unredacted_user.access_level_id))).one()
+    scopes = str(get_scopes_for_role(access_role.name))
+    access_token = create_access_token(
+        data={"sub": current_user.username, "scope": scopes}, expires_delta=TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
+    )
+    
+    return Token(access_token=access_token, token_type="bearer")
 
 # @auth_router.post("/access-token")
 # async def get_access_token(

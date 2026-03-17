@@ -3,6 +3,7 @@
         "fernet",
         "ondelete",
         "pwdlib",
+        "pyrate",
         "sendt",
         "totp",
         "unredacted",

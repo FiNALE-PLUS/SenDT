@@ -8,6 +8,9 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
 
+from pyrate_limiter import Duration, Limiter, Rate
+from fastapi_limiter.depends import RateLimiter
+
 from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authenticate_user_from_db_with_totp, authorise_current_user, get_user_from_db
 from api.dependencies.auth.responses import bad_credentials_exception, two_factor_disabled_exception, two_factor_enabled_exception
 from api.dependencies.auth.scopes import two_factor_setup_verification_scope_manager, two_factor_access_request_token_scope_manager
@@ -25,6 +28,8 @@ from db.session.session import AsyncSessionDep
 from db.models.users import User, UserAccess
 
 auth_router = APIRouter(prefix='/auth', tags=['Authentication'])
+
+user_authentication_endpoint_rate_limit = Depends(RateLimiter(limiter=Limiter(Rate(3, Duration.SECOND * 30))))
 
 # TODO: Update the scope manager with the correct argument once migrated, and clean up the tangle of endpoints with overlapping and incomplete goals
 
@@ -53,7 +58,10 @@ async def register(
     return Response(status_code=status.HTTP_201_CREATED)
 
 
-@auth_router.post('/2fa-registration-token')
+@auth_router.post(
+    "/2fa-registration-token",
+    dependencies=[user_authentication_endpoint_rate_limit],
+    )
 async def get_two_factor_registration_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSessionDep
@@ -113,7 +121,10 @@ async def get_two_factor_uri(
     
     return {'uri': uri}
 
-@auth_router.post("/2fa-verify")
+@auth_router.post(
+    "/2fa-verify",
+    dependencies=[user_authentication_endpoint_rate_limit],
+    )
 async def verify_2fa_registration(
     current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
@@ -122,18 +133,24 @@ async def verify_2fa_registration(
     cur_timestamp = datetime.now()
     await check_2fa_disabled(current_user, session)
     
-    if not await verify_totp_for_token_user(current_user, session, totp_form.totp, cur_timestamp):
+    entered_totp = totp_form.totp
+    
+    if not await verify_totp_for_token_user(current_user, session, entered_totp, cur_timestamp):
         raise bad_credentials_exception
     
     unredacted_user = await get_user_from_db(session, current_user.username)
     unredacted_user.two_factor_enabled = True
+    unredacted_user.last_two_factor = get_password_hash(entered_totp)
     await session.commit()
     
     return Response(status_code=status.HTTP_200_OK)
 
-# TODO: Add endpoints to login with 2FA after verified
+# TODO: Add rate-limiting to endpoints
 
-@auth_router.post("/access-request-token")
+@auth_router.post(
+    "/access-request-token",
+    dependencies=[user_authentication_endpoint_rate_limit],
+    )
 async def get_access_request_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: AsyncSessionDep
@@ -142,8 +159,7 @@ async def get_access_request_token(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Provide both username and password",
-        )
-        
+        )        
     user = await authenticate_user_from_db_without_totp(session, form_data.username, form_data.password)
     if user is None:
         raise bad_credentials_exception
@@ -156,7 +172,10 @@ async def get_access_request_token(
     )
     return Token(access_token=access_token, token_type="bearer")
 
-@auth_router.post("/api-access-token")
+@auth_router.post(
+    "/api-access-token",
+    dependencies=[user_authentication_endpoint_rate_limit],
+    )
 async def get_access_token(
     current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_access_request_token_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
@@ -165,6 +184,8 @@ async def get_access_token(
     cur_timestamp = datetime.now()
     await check_2fa_enabled(current_user, session)
     
+    entered_totp = totp_form.totp
+    
     if not await verify_totp_for_token_user(current_user, session, totp_form.totp, cur_timestamp):
         raise bad_credentials_exception
     
@@ -172,6 +193,9 @@ async def get_access_token(
     if unredacted_user is None:
         raise bad_credentials_exception
     
+    unredacted_user.last_two_factor = get_password_hash(entered_totp)
+    await session.commit()
+    await session.refresh(unredacted_user)
     access_role = (await session.exec(select(UserAccess).where(UserAccess.id == unredacted_user.access_level_id))).one()
     scopes = str(get_scopes_for_role(access_role.name))
     access_token = create_access_token(

@@ -20,7 +20,6 @@ def encrypt_otp_key(otp_key: str):
     return str(multi_fernet_instance.encrypt(bytes(otp_key, encoding='utf-8')), encoding='utf-8')
     
 def decrypt_otp_key(otp_key: str):
-    print(otp_key)
     return str(multi_fernet_instance.decrypt(bytes(otp_key, encoding='utf-8')), encoding='utf-8')
 
 def get_safe_otp_key():

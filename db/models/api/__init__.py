@@ -1,0 +1,1 @@
+from .ip_blacklist import BannedIPAddress

@@ -28,6 +28,8 @@ oauth2_scheme = OAuth2PasswordBearer(
 
 ADMIN_SCOPE_VALUE = AdministratorScope(granted=True).get_scope_values()
 
+MAX_FAILED_LOGIN_ATTEMPTS = 5
+
 class RedactedUserInDB(BaseModel):
     username: str
     disabled: bool
@@ -61,9 +63,19 @@ async def get_redacted_user_from_db(session: AsyncSession, username: str):
 
 async def authenticate_user_from_db_without_totp(session: AsyncSession, username: str, password: str) -> User | None:
     db_user = await get_user_from_db(session, username)
+    
+    if db_user is None:
+        return None
 
-    if db_user is not None and verify_password(password, db_user.hash):
+    if verify_password(password, db_user.hash):
         return db_user
+    # TODO: Revisit restricting accounts when failed attempts occur
+    # else:
+    #     db_user.failed_attempts += 1
+    #     if db_user.failed_attempts >= MAX_FAILED_LOGIN_ATTEMPTS:
+    #         db_user.disabled = True
+    #     await session.commit()
+    #     return None
     
 async def authenticate_user_from_db_with_totp(session: AsyncSession, username: str, password: str, totp: str) -> User | None:
     db_user = await get_user_from_db(session, username)

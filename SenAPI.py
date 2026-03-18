@@ -5,7 +5,7 @@ from fastapi import FastAPI, APIRouter
 from sqlalchemy import NullPool
 from sqlmodel import SQLModel
 
-from api.routers import auth_router, chart_router, blob_router, song_router
+from api.routers import admin_router, auth_router, chart_router, blob_router, song_router
 from db.initialise.initialise import init_postgres_db
 from db.session.records import configure_default_db_enums
 
@@ -26,6 +26,7 @@ The API to be used by the SenDT front end to manage data for all collaborators.
 app = FastAPI(on_startup=[on_startup], title='SenDT API', summary=app_summary)
 
 v1_api_router = APIRouter(prefix="/api/v1")
+v1_api_router.include_router(admin_router)
 v1_api_router.include_router(auth_router)
 v1_api_router.include_router(chart_router)
 v1_api_router.include_router(blob_router)

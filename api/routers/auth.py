@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import BytesIO
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Security, status
-from fastapi.responses import StreamingResponse, RedirectResponse, Response
+from fastapi.responses import Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import select
@@ -11,19 +11,16 @@ from sqlmodel import select
 from pyrate_limiter import Duration, Limiter, Rate
 from fastapi_limiter.depends import RateLimiter
 
-from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authenticate_user_from_db_with_totp, authorise_current_user, get_user_from_db
-from api.dependencies.auth.responses import bad_credentials_exception, two_factor_disabled_exception, two_factor_enabled_exception
+from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authorise_current_user, get_user_from_db
+from api.dependencies.auth.responses import bad_credentials_exception
 from api.dependencies.auth.scopes import two_factor_setup_verification_scope_manager, two_factor_access_request_token_scope_manager
 from api.dependencies.auth.two_factor_authentication import verify_totp_for_token_user
 from api.dependencies.scopes import get_scopes_for_role
 from api.services.two_factor import check_2fa_disabled, check_2fa_enabled, get_plain_2fa_key_from_redacted_user
-from api.utils.auth.hasher import verify_password, get_password_hash
-from api.utils.auth.scopes.fields.totp_access import TOTPScopeField, TOTPVerifySubScope
-from api.utils.auth.scopes.scope_manager import ChartScopeField, ScopeManager, SongScopeField, SdtBlobScopeField
-from api.utils.auth.scopes.fields import DBReadSubScope
+from api.utils.auth.hasher import get_password_hash
 from api.utils.auth.token import create_access_token
 from api.utils.auth.token_const import TOKEN_EXPIRY_TIMEDELTA, TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
-from api.utils.auth.two_factor_auth.totp import decrypt_otp_key, get_cur_totp_for_key, get_plain_otp_key, get_safe_otp_key, get_totp_qr_code, get_totp_uri
+from api.utils.auth.two_factor_auth.totp import get_safe_otp_key, get_totp_qr_code, get_totp_uri
 from db.session.session import AsyncSessionDep
 from db.models.users import User, UserAccess
 
@@ -176,7 +173,7 @@ async def get_access_request_token(
     "/api-access-token",
     dependencies=[user_authentication_endpoint_rate_limit],
     )
-async def get_access_token(
+async def get_api_access_token(
     current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_access_request_token_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     totp_form: Annotated[TOTPCode, Form()]
@@ -203,89 +200,3 @@ async def get_access_token(
     )
     
     return Token(access_token=access_token, token_type="bearer")
-
-# @auth_router.post("/access-token")
-# async def get_access_token(
-#     current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPCode,
-#     session: AsyncSessionDep
-# ) -> Token:
-#     """
-#     Generates a token containing a user's authorised scopes, based on their internal role. 
-#     If the user has not verified their 2FA codes for validity, the token will always contain only the scopes necessary to verify them.
-#     """
-#     unredacted_user = await get_user_from_db(session=session, username=current_user.username)
-#     if unredacted_user is None:
-#         raise bad_credentials_exception
-    
-#     if not unredacted_user.two_factor_enabled:
-#         # TODO: `url_path_for` gets the path relative to the router, which omits the base '/api/v1'. find a way to include it without hardcoding
-#         # return RedirectResponse(url=auth_router.url_path_for('get_2fa_verification_token'))
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="TOTP has not been verified",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
-#     # TODO: Complete and test 2FA workflow
-#     verified_two_factor = ...
-    
-#     # user.last_two_factor = get_password_hash(totp)
-#     # await session.commit()
-        
-    
-#     access_role = (await session.exec(select(UserAccess).where(UserAccess.id == unredacted_user.access_level_id))).one()
-#     scopes = get_scopes_for_role(access_role.name)
-    
-#     access_token = create_access_token(
-#         data={"sub": unredacted_user.username, "scope": str(scopes)}, expires_delta=TOKEN_EXPIRY_TIMEDELTA
-#     )
-#     return Token(access_token=access_token, token_type="bearer")
-
-
-# # TODO: Update scopes to add 2FA verification and 2FA access separately, then implement two-part login
-# @auth_router.post("/access-token")
-# async def get_full_token_via_two_factor_authentication(
-#     current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPCode
-#     ):
-#     ...
-
-
-# @auth_router.post("/2fa-verify-token", name='get_2fa_verification_token')
-# async def get_two_factor_verification_token(
-#     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-#     session: AsyncSessionDep
-#     ):
-#     """
-#     Generates a token containing a user's authorised scopes, based on their internal role. 
-#     If the user has not verified their 2FA codes for validity, the token will always contain only the scopes necessary to verify them.
-#     """
-#     user = await authenticate_user_from_db(session, form_data.username, form_data.password)
-#     if user is None:
-#         raise bad_credentials_exception
-#     if user.two_factor_enabled:
-#         # TODO: `url_path_for` gets the path relative to the router, which omits the base '/api/v1'. find a way to include it without hardcoding
-#         # return RedirectResponse(url=auth_router.url_path_for('get_2fa_verification_token'))
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="TOTP has already been verified",
-#             headers={"WWW-Authenticate": "Bearer"},
-#         )
-        
-#     scopes = two_factor_verification_scopes
-#     access_token = create_access_token(
-#         data={"sub": user.username, "scope": str(scopes)}, expires_delta=TWO_FACTOR_TOKEN_EXPIRY_TIMEDELTA
-#     )
-#     return Token(access_token=access_token, token_type="bearer")
-
-# @auth_router.get("/2fa-qr")
-
-# # TODO
-# @auth_router.post("/2fa-verify")
-# async def verify_TOTP_validity(current_user: Annotated[User, Security(authorise_current_user, scopes=two_factor_verification_scopes)], totp: TOTPUrlEncodedForm):
-#     """
-#     Verifies that the user is able to give the correct TOTP for the secret saved by the server. 
-#     If successful, the user will be able to collect a token containing all scopes applicable to their role from the `token` endpoint.
-#     """
-    
-    
-    
-#     return current_user

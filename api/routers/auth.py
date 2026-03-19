@@ -11,7 +11,7 @@ from sqlmodel import select
 from pyrate_limiter import Duration, Limiter, Rate
 from fastapi_limiter.depends import RateLimiter
 
-from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authorise_current_user, get_user_from_db
+from api.dependencies.auth.authentication import RedactedUserInDB, TOTPCode, Token, authenticate_user_from_db_without_totp, authorise_current_redacted_user, get_user_from_db
 from api.dependencies.auth.responses import bad_credentials_exception
 from api.dependencies.auth.scopes import two_factor_setup_verification_scope_manager, two_factor_access_request_token_scope_manager
 from api.dependencies.auth.two_factor_authentication import verify_totp_for_token_user
@@ -67,8 +67,8 @@ async def get_two_factor_registration_token(
     Generates a token containing a user's authorised scopes, based on their internal role. 
     If the user has not verified their 2FA codes for validity, the token will always contain only the scopes necessary to verify them.
     """
-    await check_2fa_disabled()
     user = await authenticate_user_from_db_without_totp(session, form_data.username, form_data.password)
+    await check_2fa_disabled(RedactedUserInDB(username=user.username, disabled=user.disabled), session)
         
     scopes = str(two_factor_setup_verification_scope_manager)
     access_token = create_access_token(
@@ -91,7 +91,7 @@ async def get_two_factor_registration_token(
     response_class=Response
     )
 async def get_two_factor_qr(
-    current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
+    current_user: Annotated[RedactedUserInDB, Security(authorise_current_redacted_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     ):
     # Prevent others from obtaining a means of enrolling 2fa after complete
@@ -107,7 +107,7 @@ async def get_two_factor_qr(
 
 @auth_router.get("/2fa-enrol-uri")
 async def get_two_factor_uri(
-    current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
+    current_user: Annotated[RedactedUserInDB, Security(authorise_current_redacted_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     ):
     await check_2fa_disabled(current_user, session)
@@ -123,7 +123,7 @@ async def get_two_factor_uri(
     dependencies=[user_authentication_endpoint_rate_limit],
     )
 async def verify_2fa_registration(
-    current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
+    current_user: Annotated[RedactedUserInDB, Security(authorise_current_redacted_user, scopes=two_factor_setup_verification_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     totp_form: Annotated[TOTPCode, Form()]
     ):
@@ -174,7 +174,7 @@ async def get_access_request_token(
     dependencies=[user_authentication_endpoint_rate_limit],
     )
 async def get_api_access_token(
-    current_user: Annotated[RedactedUserInDB, Security(authorise_current_user, scopes=two_factor_access_request_token_scope_manager.get_scope_array())], 
+    current_user: Annotated[RedactedUserInDB, Security(authorise_current_redacted_user, scopes=two_factor_access_request_token_scope_manager.get_scope_array())], 
     session: AsyncSessionDep,
     totp_form: Annotated[TOTPCode, Form()]
     ):

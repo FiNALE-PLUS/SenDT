@@ -1,15 +1,20 @@
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import Column, DateTime, Relationship, SQLModel, Field, func
 
-ipv4_regex = r'^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$'
-ipv6_regex = r'^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$'
+from utils.timestamps.default_timestamps import get_utc_now
 
-ip_regex = f'{ipv4_regex}|{ipv6_regex}'
+from api.utils.admin.patterns import ip_regex
+from db.models.users import User
 
 class BannedIPAddress(SQLModel, table=True):
-    __tablename__ = 'api_ip_blacklist'
+    __tablename__ = 'api_ip_naughty_list'
     
-    id:         int | None = Field(default=None, primary_key=True)
-    ip:         str        = Field(regex=ip_regex, nullable=False, index=True)
-    created_at: datetime   = Field(default=lambda: datetime.now(timezone.utc), nullable=False)
+    id:         int | None        = Field(default=None, primary_key=True)
+    ip:         str               = Field(regex=ip_regex, nullable=False, index=True)
+    reason:     str | None        = Field(default=None, nullable=True)
+    created_by: int | None        = Field(default=None, foreign_key="sendt_user.id")
+    ip_ban_creator: User | None   = Relationship(back_populates="user_ip_bans")
+    created_at: datetime | None   = Field(default=None, sa_column=Column(DateTime(timezone=True), server_default=func.now(), nullable=False))
+    ends_at: datetime | None      = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))

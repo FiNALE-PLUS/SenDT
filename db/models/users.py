@@ -1,21 +1,28 @@
+from typing import TYPE_CHECKING
+
 from sqlmodel import SQLModel, Field, Relationship
+
+if TYPE_CHECKING:
+    from db.models.api.ip_blacklist import BannedIPAddress
 
 
 class User(SQLModel, table=True):
     __tablename__ = 'sendt_user'
 
-    id: int | None                = Field(default=None, primary_key=True)
-    username: str                 = Field(unique=True, nullable=False, index=True)
-    hash: str                     = Field(nullable=False)
-    disabled: bool                = Field(default=False, nullable=False)
-    two_factor_secret: str        = Field(nullable=False)
-    last_two_factor: str | None   = Field()
-    two_factor_enabled: bool      = Field(default=False, nullable=False)
+    id: int | None                                    = Field(default=None, primary_key=True)
+    username: str                                     = Field(unique=True, nullable=False, index=True)
+    hash: str                                         = Field(nullable=False)
+    disabled: bool                                    = Field(default=False, nullable=False)
+    two_factor_secret: str                            = Field(nullable=False)
+    last_two_factor: str | None                       = Field()
+    two_factor_enabled: bool                          = Field(default=False, nullable=False)
     # TODO: Revisit
     # failed_attempts: int          = Field(default=0, nullable=False)
     
-    access_level_id: int          = Field(default=1, foreign_key="user_access_level.id")
-    user_access_level: UserAccess = Relationship(back_populates="users_with_access_level")
+    access_level_id: int                              = Field(default=1, foreign_key="user_access_level.id")
+    user_access_level: UserAccess                     = Relationship(back_populates="users_with_access_level")
+    
+    user_ip_bans: list["BannedIPAddress"] = Relationship(back_populates="ip_ban_creator")
 
 
 # TODO: Add access levels on startup and add 1-many relation

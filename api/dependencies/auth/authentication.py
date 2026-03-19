@@ -86,7 +86,15 @@ async def authenticate_user_from_db_with_totp(session: AsyncSession, username: s
         return db_user
 
 
-async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], security_scopes: SecurityScopes, session: AsyncSessionDep) -> RedactedUserInDB:
+async def authorise_current_redacted_user(token: Annotated[str, Depends(oauth2_scheme)], security_scopes: SecurityScopes, session: AsyncSessionDep):
+   """
+    Identical to ``authorise_current_full_user()``, but redacts sensitive information to protect against leaks. 
+    Should be preferred when these fields are not needed to reduce potential for vulnerabilities.
+    """
+   full_user = await authorise_current_full_user(token, security_scopes, session)
+   return RedactedUserInDB(username=full_user.username, disabled=full_user.disabled)
+
+async def authorise_current_full_user(token: Annotated[str, Depends(oauth2_scheme)], security_scopes: SecurityScopes, session: AsyncSessionDep):
     """
     Authorises the current user against the specified security scopes via their provided token. 
     If the token is valid, the user is validated to currently exist and not be disabled at the point of the API call, 
@@ -103,7 +111,7 @@ async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], 
         credentials_exception: If the user is not authorised to access the endpoint or does not exist.
 
     Returns:
-        RedactedUserInDB: The user that has been authorised to access the endpoint with sensitive data removed.
+        User: The user that has been authorised to access the endpoint.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -126,7 +134,7 @@ async def authorise_current_user(token: Annotated[str, Depends(oauth2_scheme)], 
         raise credentials_exception
     
     # Verify that there is the specified user for the token in the DB
-    user = await get_redacted_user_from_db(session, username=token_data.username)
+    user = await get_user_from_db(session, username=token_data.username)
     if user is None:
         raise credentials_exception
     

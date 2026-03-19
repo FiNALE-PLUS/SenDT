@@ -1,12 +1,13 @@
 import asyncio
 from os import getenv
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Response, status
 from sqlalchemy import NullPool
 from sqlmodel import SQLModel
 
 from api.routers import admin_router, auth_router, chart_router, blob_router, song_router
 from db.initialise.initialise import init_postgres_db
+from db.models.api.t import TestModel
 from db.session.records import configure_default_db_enums
 
 # Required to create schema
@@ -38,3 +39,7 @@ app.include_router(v1_api_router, tags=["v1"])
 @app.get("/")
 async def root():
     return {"message": "Hello from SenDT"}
+
+@app.post("/test")
+async def test_model(body: TestModel):
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

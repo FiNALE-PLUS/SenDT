@@ -1,11 +1,24 @@
 from pathlib import Path
+from sys import platform
 
 from PIL import Image
 
 BASE_DIR = Path(__file__).resolve().parent
 
 BINARY_DIR = BASE_DIR / 'bin'
-FFMPEG_PATH = BINARY_DIR / 'ffmpeg.exe'
+
+if platform == 'win32':
+    FFMPEG_NAME = 'ffmpeg.exe'
+    FFPROBE_NAME = ('ffprobe'
+                    '.exe')
+# Intended for linux
+else:
+    FFMPEG_NAME = 'ffmpeg'
+    FFPROBE_NAME = 'ffprobe'
+
+
+FFMPEG_PATH = BINARY_DIR / FFMPEG_NAME
+FFPROBE_PATH = BINARY_DIR / FFPROBE_NAME
 
 DATA_PATH = BASE_DIR / 'data'
 SETTINGS_PATH = DATA_PATH / 'settings.json'

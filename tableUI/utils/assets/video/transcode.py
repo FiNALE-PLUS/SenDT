@@ -1,11 +1,19 @@
+import json
+from io import BytesIO
 from pathlib import Path
+from warnings import deprecated
 
 from ffmpeg import FFmpeg, Progress
 
-from tableUI.const import FFMPEG_PATH
+from tableUI.const import FFMPEG_PATH, FFPROBE_PATH
+from tableUI.utils.assets.video.mask import generate_finale_pv_mask
 
 
-# TODO: add configuration and worker for UI
+class NotAVideo(ValueError):
+    ...
+
+
+@deprecated('use `transcode_finale_pv` instead')
 def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, output_path: Path,
                                                           quality: int = 1) -> FFmpeg:
     """
@@ -48,13 +56,129 @@ def create_ffmpeg_instance_for_background_video_transcode(input_path: Path, outp
 
     return ffmpeg
 
-if __name__ == '__main__':
-    fmp = create_ffmpeg_instance_for_background_video_transcode(
-        Path(r'C:\Users\sebas\Videos\4K Video Downloader+\[MV] TAK - ‘PPPP’ feat. Hatsune Miku, Kasane Teto.mp4'),
-        Path(r'./transcoded.wmv')
+
+def transcode_finale_pv(input_path: Path, output_path: Path,
+                        quality: int = 1) -> tuple[FFmpeg, bytes | None]:
+    """
+    Asyncronously transcodes a video at ``input_path`` into one suitable for use within Maimai FiNALE
+    Videos that do not have an aspect ratio of 1:1 will have black bars added to fit within the play area without distortion,
+    and landscape videos will have a mirror effect added similarly to those found in the vanilla game.
+
+    :param input_path: The path of the input video to transcode.
+    :param output_path: The path of the output video to write to. Note that the file extension will be ``wmv``.
+    :param quality: The target video quality. Lower is higher quality and file size. Bitrate *is not* directly accessible via this function.
+    :return: An ``FFmpeg`` instance that will transcode to the video at ``output_path``.
+    """
+
+    print(FFPROBE_PATH.absolute())
+
+    # ffprobe = (
+    #     FFmpeg(executable=FFPROBE_PATH.absolute()).
+    #     input(
+    #         str(input_path.absolute()),
+    #     )
+    #     # option('print_format', 'json')
+    #     # option('show_streams', None)
+    # )
+
+    ffprobe = FFmpeg(FFPROBE_PATH.absolute()).input(
+        str(input_path.absolute()),
+        print_format="json",  # ffprobe will output the results in JSON format
+        show_streams=None,
     )
 
-    
+    media = json.loads(ffprobe.execute())
+
+    media = json.loads(ffprobe.execute())
+
+    if (main_stream_type := media['streams'][0]['codec_type']) != 'video':
+        raise NotAVideo(f'{main_stream_type}')
+
+    input_width, input_height = media['streams'][0]['width'], media['streams'][0]['height']
+
+    if input_width <= input_height:
+        ffmpeg = (
+            FFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            option('y').
+            # option().
+            # option('fps', 30).
+            input(
+                str(input_path.absolute()),
+            ).
+            output(
+                str(output_path.with_suffix('.wmv').absolute()),
+                {
+                    'vcodec': 'wmv2',
+                    # 'b:v': bitrate,
+                    # 'b:v': bitrate,
+                    'q:v': quality,
+                    # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
+                    # 'r': 30,
+                    # 1:1 aspect ratio
+                    'aspect': 1,
+                    # Resize to 600x600 with black bars
+                    'vf':
+                        r"[0:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
+                        r"[cropped] pad=600:600:(ow-iw)/2:(oh-ih)/2",
+                    # Remove audio tracks from output
+                    'an': None
+                },
+                # kwargs=('an',)
+            ))
+        return ffmpeg, None
+
+    else:
+        mask = generate_finale_pv_mask(input_width, input_height)
+
+        mask_io = BytesIO()
+        mask.save(mask_io, format='PNG')
+
+        ffmpeg = (
+            FFmpeg(executable=str(FFMPEG_PATH.absolute())).
+            option('y').
+            # Inputs must be this way round so that the filter applies to the video file,
+            # and therefore attempts to remove the audio track from the video as opposed to the alpha mask
+            input('pipe:0').
+            input(
+                str(input_path.absolute()),
+            ).
+            # Used to add the mask without writing to disk
+            output(
+                str(output_path.with_suffix('.wmv').absolute()),
+                {
+                    'vcodec': 'wmv2',
+                    # 'b:v': bitrate,
+                    # 'b:v': bitrate,
+                    'q:v': quality,
+                    # Forced 30 FPS - removed as Maimai has been found to use other (notably higher) framerate videos in some cases
+                    # 'r': 30,
+                    # 1:1 aspect ratio
+                    'aspect': 1,
+                    # Resize to 600x600 with black bars
+                    'filter_complex':
+                        r"[1:v]scale=600:600:force_original_aspect_ratio=decrease[cropped];"
+                        r"[cropped] split [main][to_mirror];"
+                        r"[main] pad=600:600:(ow-iw)/2:(oh-ih)/2 [centre];"
+                        r"[to_mirror] vflip [mirror];"
+                        r"[centre][mirror] overlay=0:(main_h/2)+(overlay_h/2)+2[stack];"
+                        r"[stack]crop=600:600:0:0[cropped_stack];"
+                        r"[0:v] alphaextract [alpha];"
+                        r"[cropped_stack][alpha] alphamerge[stack_with_alpha];"
+                        r"[stack_with_alpha] premultiply=inplace=yes",
+                    # Remove audio tracks from output
+                    'an': None
+                },
+                # kwargs=('an',)
+            )
+        )
+        return ffmpeg, mask_io.getvalue()
+
+
+if __name__ == '__main__':
+    fmp, mask = transcode_finale_pv(
+        Path(r'input.mp4'),
+        Path(r'./transcoded.wmv')
+    )
 
     @fmp.on('start')
     def on_start(arguments: list[str]):
@@ -74,4 +198,4 @@ if __name__ == '__main__':
     def on_terminated():
         print("terminated")
 
-    fmp.execute()
+    fmp.execute(mask)

@@ -5,7 +5,7 @@
 /tableUI/data/backups/*
 /tableUI/data/table_data.sqlite
 /tableUI/data/settings.json
-/tableUI/bin/ffmpeg.exe
+/tableUI/bin/
 
 
 # Byte-compiled / optimized / DLL files

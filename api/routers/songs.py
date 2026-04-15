@@ -33,8 +33,6 @@ async def get_song_page(
         song_query = song_query.where(or_(Song.name_en.contains(name), Song.name_jp.contains(name)))
     if artist_id:
         song_query = song_query.where(Song.artist_id == artist_id)
-        
-    print(str(song_query))
     
     return await apaginate(session, song_query)
 

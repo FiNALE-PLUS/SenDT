@@ -3,6 +3,7 @@ from os import getenv
 
 from fastapi import Depends, FastAPI, APIRouter, Response, status
 from fastapi_limiter.depends import RateLimiter
+from fastapi_pagination import add_pagination
 from pyrate_limiter import Duration, Limiter, Rate
 from sqlalchemy import NullPool
 from sqlmodel import SQLModel
@@ -29,6 +30,7 @@ The API to be used by the SenDT front end to manage data for all collaborators.
 
 
 app = FastAPI(on_startup=[on_startup], title='SenDT API', summary=app_summary, dependencies=[app_endpoint_rate_limit])
+add_pagination(app)
 
 v1_api_router = APIRouter(prefix="/api/v1")
 v1_api_router.include_router(admin_router)

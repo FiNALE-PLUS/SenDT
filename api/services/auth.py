@@ -1,6 +1,6 @@
 from api.utils.auth.scopes.fields.db_access import (
     SongScopeField, ChartScopeField, ArtistScopeField, ChartCreatorScopeField, 
-    GenreScopeField, SdtBlobScopeField, AudioScopeField, VideoScopeField
+    GenreScopeField, SdtBlobScopeField, AudioBlobScopeField, VideoBlobScopeField
     )
 
 from api.utils.auth.scopes.scope_manager import ScopeManager
@@ -39,8 +39,8 @@ def get_scopes_for_role(role: str) -> ScopeManager:
                 chart_creator_access=ChartCreatorScopeField(read_access=True),
                 genre_access=GenreScopeField(read_access=True),
                 sdt_blob_access=SdtBlobScopeField(read_access=True),
-                audio_blob_access=AudioScopeField(read_access=True),
-                video_blob_access=VideoScopeField(read_access=True)
+                audio_blob_access=AudioBlobScopeField(read_access=True),
+                video_blob_access=VideoBlobScopeField(read_access=True)
             )
         case 'dev':
             return ScopeManager(

@@ -53,8 +53,7 @@ def cli_choice_menu(selections: list, menu_name: str, selection_text: str, menu_
     # Display validation state when applicable
     title = menu_name
     if required_validation is not None:
-        title += f' [currently {Style.BRIGHT}{Fore.LIGHTGREEN_EX + "valid" if required_validation()
-                  else Fore.LIGHTRED_EX + "invalid"}{Style.RESET_ALL}]'
+        title += f' [currently {Style.BRIGHT}{Fore.LIGHTGREEN_EX + "valid" if required_validation() else Fore.LIGHTRED_EX + "invalid"}{Style.RESET_ALL}]'
     print(f"-------------------- {title} --------------------")
 
     if menu_desc is not None:

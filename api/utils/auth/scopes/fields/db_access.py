@@ -54,10 +54,10 @@ class SdtBlobScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'sdt'
     DocsName: ClassVar[str] = 'SDT chart'
     
-class AudioScopeField(DBRecordScopeField):
+class AudioBlobScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'aud'
     DocsName: ClassVar[str] = 'audio file'
     
-class VideoScopeField(DBRecordScopeField):
+class VideoBlobScopeField(DBRecordScopeField):
     ScopeName: ClassVar[str] = 'v'
     DocsName: ClassVar[str] = 'video file'

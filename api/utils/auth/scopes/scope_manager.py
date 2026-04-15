@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 from api.utils.auth.scopes.fields.boolean_field import AdministratorScope, CrossEditScope, VerifyTwoFactorScope
-from api.utils.auth.scopes.fields.db_access import DBRecordScopeField, ArtistScopeField, AudioScopeField, ChartCreatorScopeField, ChartScopeField, GenreScopeField, SdtBlobScopeField, SongScopeField, VideoScopeField
+from api.utils.auth.scopes.fields.db_access import DBRecordScopeField, ArtistScopeField, AudioBlobScopeField, ChartCreatorScopeField, ChartScopeField, GenreScopeField, SdtBlobScopeField, SongScopeField, VideoBlobScopeField
 from api.utils.auth.scopes.fields.interface import ScopeField
 from api.utils.auth.scopes.fields.totp_access import TOTPScopeField
 
@@ -31,8 +31,8 @@ class ScopeManager(BaseModel):
     chart_creator_access:   ChartCreatorScopeField = ChartCreatorScopeField()
     genre_access:           GenreScopeField        = GenreScopeField()
     sdt_blob_access:        SdtBlobScopeField      = SdtBlobScopeField()
-    audio_blob_access:      AudioScopeField        = AudioScopeField()
-    video_blob_access:      VideoScopeField        = VideoScopeField()
+    audio_blob_access:      AudioBlobScopeField    = AudioBlobScopeField()
+    video_blob_access:      VideoBlobScopeField    = VideoBlobScopeField()
     
     def match_token_string_scopes(self, token_scopes: str):
         # Reset permissions to then grant as found

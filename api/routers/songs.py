@@ -9,7 +9,7 @@ from sqlmodel import or_, select
 from api.dependencies.auth.authentication import authorise_current_redacted_user
 from api.utils.auth.scopes.fields import DBDeleteSubScope, DBReadSubScope, DBWriteSubScope
 from api.utils.auth.scopes.scope_manager import ScopeManager, SongScopeField
-from db.models.songs_and_charts import Song
+from db.models.songs_and_charts import Song, SongArtist
 from db.models.users import User
 from db.session.session import AsyncSessionDep
 
@@ -26,14 +26,17 @@ async def get_song_page(
     current_user: Annotated[User, Security(authorise_current_redacted_user, scopes=song_read_scopes)],
     session: AsyncSessionDep,
     name:   str | None = None,
-    artist_id: int | None = None
+    artist_id: int | None = None,
+    artist_name: str | None = None
 ) -> Page[Song]:
-    song_query = select(Song)
+    song_query = select(Song).join(SongArtist, Song.artist_id == SongArtist.id)
     if name:
         song_query = song_query.where(or_(Song.name_en.contains(name), Song.name_jp.contains(name)))
     if artist_id:
         song_query = song_query.where(Song.artist_id == artist_id)
-    
+    if artist_name:
+        song_query = song_query.where(or_(SongArtist.name_en.contains(artist_name), SongArtist.name_jp.contains(artist_name)))
+        
     return await apaginate(session, song_query)
 
 @song_router.post("/")

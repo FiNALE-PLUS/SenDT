@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
         "apaginate",
+        "fastapi",
         "fernet",
         "ondelete",
         "pwdlib",
@@ -9,6 +10,7 @@
         "totp",
         "unredacted",
         "utage",
+        "venv",
         "xedit"
     ]
 }

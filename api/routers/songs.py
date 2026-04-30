@@ -44,32 +44,33 @@ async def get_song_page(
 
 @song_router.post("/")
 async def add_song(
-    # current_user: Annotated[User, Security(authorise_current_redacted_user, scopes=song_write_scopes)],
+    current_user: Annotated[User, Security(authorise_current_redacted_user, scopes=song_write_scopes)],
     session: AsyncSessionDep,
     song: Song
 ):
     session.add(song)
     try:
         await session.commit()
-    # except UniqueViolationError as unique_exc:
-    #     print(unique_exc.sqlstate)
-    # TODO: Separate generic integrity error and unique violation of custom rules
+    
     except IntegrityError as integrity_exc:
         
+        # Constraints on DB
         err_message = str(integrity_exc)
+        # print(err_message)
+        # PK
+        if 'song_pkey' in err_message:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='song id already in use')
+        if 'song_artist_id_fkey' in err_message:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='song artist does not exist')
+        if 'song_genre_id_fkey' in err_message:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='song genre does not exist')
         
-        # Check for custom unique constraints
-        # TODO: Check if there is a way to extract unwrapped exception type instead of searching within the error message
         if 'unique_song_name_and_artist' in err_message:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'song name and artist combination already used - do not duplicate songs')
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='song name and artist combination already used - do not duplicate songs')
         if 'bpm_is_positive' in err_message:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'bpm must be > 0')
-        
-        # print(integrity_exc.orig)
-        # if isinstance(integrity_exc.orig, AsyncpgIntegrityError):
-        #     # integrity_exc.orig
-        #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f'{unique_exc.sqlstate} song name and artist combination already used - do not duplicate songs')
-        # print(type(integrity_exc.orig))
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='id collision - check if song id is in use and relations')
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='bpm must be > 0')
+    
+        # Unknown client error
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
         
     return Response(status_code=200)

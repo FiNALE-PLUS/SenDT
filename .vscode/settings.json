@@ -4,6 +4,7 @@
         "fastapi",
         "fernet",
         "ondelete",
+        "pkey",
         "pwdlib",
         "pyrate",
         "sendt",

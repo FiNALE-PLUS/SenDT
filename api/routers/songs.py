@@ -54,17 +54,19 @@ async def add_song(
     
     except IntegrityError as integrity_exc:
         
-        # Constraints on DB
         err_message = str(integrity_exc)
-        # print(err_message)
+        
         # PK
         if 'song_pkey' in err_message:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='song id already in use')
+        
+        # Foreign keys
         if 'song_artist_id_fkey' in err_message:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='song artist does not exist')
         if 'song_genre_id_fkey' in err_message:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='song genre does not exist')
         
+        # Table constraints
         if 'unique_song_name_and_artist' in err_message:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='song name and artist combination already used - do not duplicate songs')
         if 'bpm_is_positive' in err_message:

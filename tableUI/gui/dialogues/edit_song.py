@@ -81,6 +81,7 @@ class SongManagementDialog(QDialog):
 
         ### BPM
         self.bpm_select = QDoubleSpinBox()
+        self.bpm_select.setDecimals(4)
         self.setup_bpm_select()
         main_data_form.addRow('BPM:', self.bpm_select)
         song_info_layout.addLayout(main_data_form)

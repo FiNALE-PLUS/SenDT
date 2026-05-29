@@ -48,7 +48,7 @@ def export_data(session: Session, game_dir: Path, parent: QWidget = None):
                 (table_contents.textouts.jp, table_paths.textout_jp)):
 
             # Ensure encoding is always little-endian for compatibility with host machines
-            final_content = encrypt_table_with_env_key(bytes(plain_content.build_table(), encoding='utf-16-le'))
+            final_content = encrypt_table_with_env_key(bytes(plain_content.build_table(), encoding='utf-16-le-sig'))
 
             with open(dest_path, "wb") as f:
                 f.write(final_content)
